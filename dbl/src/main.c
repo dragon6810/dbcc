@@ -10,8 +10,11 @@ bool linking = true;
 
 void opensource(FILE* ptr)
 {
+    int i;
+
     unsigned long int fsize;
     char* buff;
+    darr_t arr;
 
     fseek(ptr, 0, SEEK_END);
     fsize = ftell(ptr);
@@ -22,7 +25,11 @@ void opensource(FILE* ptr)
     fseek(ptr, 0, SEEK_SET);
     fread(buff, 1, fsize, ptr);
 
-    tokenize(buff);
+    arr = tokenize(buff);
+    for(i=0; i<arr.len; i++)
+        free(((token_t*) arr.data)[i].payload);
+
+    free(arr.data);
 
     free(buff);
 }
