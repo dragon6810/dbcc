@@ -5,6 +5,8 @@
 void darr_init(darr_t* arr, size_t itemsize)
 {
     arr->itemsize = itemsize;
+    arr->data = NULL;
+    arr->len = arr->realsize = 0;
 } 
 
 void darr_push(darr_t* arr, void* item)
@@ -25,7 +27,7 @@ void darr_push(darr_t* arr, void* item)
     }
 
     arr->realsize <<= 1;
-    arr->data = realloc(arr->data, arr->realsize);
+    arr->data = realloc(arr->data, arr->realsize * arr->itemsize);
     memcpy(arr->data + arr->itemsize * arr->len, item, arr->itemsize);
     arr->len++;
 }

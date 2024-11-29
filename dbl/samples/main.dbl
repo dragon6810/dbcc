@@ -1,2 +1,3 @@
-int myint = 12
-int otherint = 4
+int myint = 12;
+int otherint = 4;
+int "string token" = 6;
