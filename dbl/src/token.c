@@ -15,7 +15,7 @@ darr_t tokenize(char* buff)
 
     darr_t arr;
 
-    darr_init(&arr, sizeof(token_t));
+    (void) darr_init(&arr, sizeof(token_t));
     for(c = start = buff, inquote = false; c<buff+strlen(buff); c++)
     {
         if(!(c - start))
@@ -52,7 +52,7 @@ valid:
             continue;
 
         curstr = malloc(c - start + 1);
-        memcpy(curstr, start, c - start);
+        (void) memcpy(curstr, start, c - start);
         curstr[c - start] = 0;
 
         curtoken.payload = curstr;
@@ -66,8 +66,8 @@ valid:
             break;
         }
 
-        printf("Token: \"%s\".\n", curstr);
-        darr_push(&arr, &curtoken);
+        (void) printf("Token: \"%s\".\n", curstr);
+        (void) darr_push(&arr, &curtoken);
 
         if(*c != '"')
             start = c;

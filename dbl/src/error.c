@@ -8,10 +8,10 @@ void Error(char* msg, ...)
 {
     va_list args;
 
-    printf("ERROR: ");
+    (void) printf("ERROR: ");
 
-    va_start(args, msg);
-    vprintf(msg, args);
-    va_end(args);
-    exit(1);
+    (void) va_start(args, msg);
+    (void) vprintf(msg, args);
+    (void) va_end(args);
+    (void) exit(1);
 }

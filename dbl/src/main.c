@@ -22,16 +22,15 @@ void opensource(FILE* ptr)
     buff = malloc(fsize + 1);
 
     buff[fsize] = 0;
-    fseek(ptr, 0, SEEK_SET);
-    fread(buff, 1, fsize, ptr);
+    (void) fseek(ptr, 0, SEEK_SET);
+    (void) fread(buff, 1, fsize, ptr);
 
     arr = tokenize(buff);
     for(i=0; i<arr.len; i++)
-        free(((token_t*) arr.data)[i].payload);
+        (void) free(((token_t*) arr.data)[i].payload);
 
-    free(arr.data);
-
-    free(buff);
+    (void) free(arr.data);
+    (void) free(buff);
 }
 
 int main(int argc, char** argv)
@@ -49,21 +48,21 @@ int main(int argc, char** argv)
         if(!strcmp(argv[i], "-c"))
         {
             if(insources)
-                Error("giving argument -c is illegal after sources have begun.\n");
+                (void) Error("giving argument -c is illegal after sources have begun.\n");
             
             linking = false;
             continue;
         }
 
         if(!insources)
-            Error("unexpected arg \"%s\".\n", argv[i]);
+            (void) Error("unexpected arg \"%s\".\n", argv[i]);
     
         ptr = fopen(argv[i], "r");
         if(!ptr)
-            Error("can't open file \"%s\".\n", argv[i]);
+            (void) Error("can't open file \"%s\".\n", argv[i]);
 
-        opensource(ptr);
-        fclose(ptr);
+        (void) opensource(ptr);
+        (void) fclose(ptr);
     }
 
     return 0;
