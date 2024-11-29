@@ -1,0 +1,75 @@
+Here are the 5 commandments for the style guide for all c code on the deadbird
+compiler collection.
+
+Commandment I.
+    All variables on the stack must be declared at the very beginning of the
+    stack frame. For example, the following snippet would comply with this
+    rule:
+    
+    void foo(char* buff)
+    {
+        int i;
+        char* cur;
+
+        for(i=0, cur=buff; i<strlen(buff); i++, cur++)
+            (void) printf("%c\n", *cur);
+    }
+
+    While the following would not:
+
+    void foo(char* buff)
+    {
+        for(int i=0, char* cur=buff; i<strlen(buff); i++, cur++)
+            (void) printf("%c\n", *cur);
+    }
+
+    This commandment is in place because it makes stack corruption much simpler
+    to debug.
+
+Commandment II.
+    All functions' return type should be clear from a call to said function,
+    any ignored or void functions should be cast to a void to make it clear
+    that the return value was intentionally ignored. For example, if I want
+    to call puts without checking the return value, I should do it like this:
+    
+    (void) puts("My String");
+
+    Not like this:
+
+    puts("My String");
+
+Commandment III.
+    All functions without input parameters should be declared with a void as
+    the single parameters in declaration, but not calling. For example, this
+    would be allowed:
+
+    void foo(void);
+    (void) foo();
+
+    But not this:
+    void foo();
+    (void) foo();
+
+Commandment IV.
+    Indentation should be done with 4 spaces, not tabs.
+
+Commandment V.
+    Curly braces should always be put on the new line unless defining an empty
+    scope. For example These both would be allowed:
+
+    void foo(void)
+    {
+        // Stuff
+    }
+    void doesnothing(void) {}
+
+    But this would be disallowed:
+    
+    void foo(void) {
+        // Stuff
+    }
+
+If a programmer does not comply with these rules, they should be either hung or
+burned at the stake in town square depending on the severity of their
+violations.
+
