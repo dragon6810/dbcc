@@ -1,6 +1,6 @@
 # This grammar was adapted from Section A13 of The C programming language, 2nd edition, by Brian W. Kernighan and Dennis M. Ritchie,Prentice Hall, 1988.
 
-The syntax of C in Backus-Naur Form
+# XThe syntax of C in Backus-Naur Form
 <translation-unit> ::= {<external-declaration>}*
 
 <external-declaration> ::= <function-definition>

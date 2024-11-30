@@ -5,6 +5,7 @@
 #include "globals.h"
 #include "error.h"
 #include "token.h"
+#include "bnf.h"
 
 bool linking = true;
 
@@ -26,6 +27,7 @@ void opensource(FILE* ptr)
     (void) fread(buff, 1, fsize, ptr);
 
     arr = tokenize(buff);
+    (void) bnf_loadspec("c.bnf"); 
     for(i=0; i<arr.len; i++)
         (void) free(((token_t*) arr.data)[i].payload);
 
