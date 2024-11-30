@@ -22,7 +22,8 @@ bool bnf_skipwhitespace(FILE* ptr)
     while((c = fgetc(ptr)) <= 32 && c != EOF)
         did = true;
 
-    fseek(ptr, -1, SEEK_CUR);
+    if(c != EOF)
+        fseek(ptr, -1, SEEK_CUR);
     return did;
 }
 
@@ -44,17 +45,32 @@ char* bnf_nexttoken(FILE* ptr)
         if(bnf_skipwhitespace(ptr))
             either = true;
         
-        if(fgetc(ptr) == '#')
+        if((c = fgetc(ptr)) == '#')
         {
             bnf_skipline(ptr);
             either = true;
         }
-        else
+        else if(c != EOF)
             fseek(ptr, -1, SEEK_CUR);
+    
+        if(bnf_skipwhitespace(ptr))
+            either = true;
     }
     
     start = ftell(ptr);    
-    while((c = fgetc(ptr)) > 32 && c != EOF);
+    fseek(ptr, 0, SEEK_END);
+    if(ftell(ptr) == start)
+    {
+        str = calloc(1, 1);
+        return str;
+    }
+
+    fseek(ptr, start, SEEK_SET);
+    while((c = fgetc(ptr)) != EOF && c > 32);
+    if(c != EOF)
+        fseek(ptr, -1, SEEK_SET);
+    else
+        printf("eof reached\n");
     end = ftell(ptr);
 
     str = malloc(end - start + 1);
@@ -69,6 +85,7 @@ bool bnf_loadspec(char* filepath)
 {
     FILE* ptr;
     char* str;
+    darr_t tokens; // Array of char*
 
     ptr = fopen(filepath, "r");
     if(!ptr)
@@ -77,10 +94,16 @@ bool bnf_loadspec(char* filepath)
         return false;
     }
 
-    str = bnf_nexttoken(ptr);
-    puts(str);
-    free(str);
+    str = 0;
+    while(!str || str[0])
+    {
+        if(str)
+            free(str);
 
+        str = bnf_nexttoken(ptr);
+        if(str[0])
+            puts(str);
+    }
     (void) fclose(ptr);
     return true;
 }
