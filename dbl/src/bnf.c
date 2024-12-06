@@ -71,7 +71,7 @@ char* bnf_nexttoken(FILE* ptr)
         fseek(ptr, -1, SEEK_SET);
     else
         printf("eof reached\n");
-    end = ftell(ptr);
+    end = ftell(ptr) - 1;
 
     str = malloc(end - start + 1);
     fseek(ptr, start, SEEK_SET);
@@ -79,6 +79,43 @@ char* bnf_nexttoken(FILE* ptr)
     str[end - start] = 0;
     
     return str;
+}
+
+char* bnf_removeanglebrackets(char* str)
+{
+    char* newstr;
+    unsigned long int start, end;
+
+    start = 0;
+    if(str[0] == '<')
+        start++;
+
+    end = strlen(str);
+    if(str[end - 1] == '>')
+        end--;
+
+    newstr = malloc(end - start);
+    memcpy(newstr, str + start, end - start);
+    newstr[end - start] = 0;
+
+    return newstr;
+}
+
+bool bnf_istokennodelabel(darr_t tokens, int index)
+{
+    char** tokendata;
+
+    if(index >= tokens.len - 1)
+       return false;
+
+    tokendata = (char**) tokens.data;
+    if(tokendata[index][0] != '<')
+        return false;
+
+    if(strcmp(tokendata[index + 1], "::="))
+        return false;
+
+    return true;
 }
 
 bnf_spec_tree_t bnf_nodepass(darr_t tokens)
@@ -89,10 +126,17 @@ bnf_spec_tree_t bnf_nodepass(darr_t tokens)
 
     char** tokensdata = (char**) tokens.data;
 
+    char* nodelabel;
+
     darr_init(&tree.nodes, sizeof(bnf_spec_node_t));
     for(i=0; i<tokens.len; i++)
     {
-        printf("Token: \"%s\".\n", tokensdata[i]);     
+        if(!bnf_istokennodelabel(tokens, i))
+            continue;
+
+        nodelabel = bnf_removeanglebrackets(tokensdata[i]);
+        printf("Node Label: \"%s\".\n", nodelabel);
+        free(nodelabel);
     }
 
     return tree; 
