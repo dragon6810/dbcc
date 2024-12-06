@@ -66,7 +66,6 @@ valid:
             break;
         }
 
-        (void) printf("Token: \"%s\".\n", curstr);
         (void) darr_push(&arr, &curtoken);
 
         if(*c != '"')

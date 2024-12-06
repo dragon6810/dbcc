@@ -21,13 +21,13 @@ void darr_push(darr_t* arr, void* item)
 
     if(arr->len < arr->realsize)
     {
-        (void) memcpy(arr->data + arr->itemsize * arr->len, item, arr->itemsize);
+        (void) memcpy(((char*) arr->data) + arr->itemsize * arr->len, item, arr->itemsize);
         arr->len++;
         return;
     }
 
     arr->realsize <<= 1;
     arr->data = realloc(arr->data, arr->realsize * arr->itemsize);
-    (void) memcpy(arr->data + arr->itemsize * arr->len, item, arr->itemsize);
+    (void) memcpy(((char*) arr->data) + arr->itemsize * arr->len, item, arr->itemsize);
     arr->len++;
 }

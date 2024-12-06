@@ -81,11 +81,31 @@ char* bnf_nexttoken(FILE* ptr)
     return str;
 }
 
+bnf_spec_tree_t bnf_nodepass(darr_t tokens)
+{
+    int i;
+
+    bnf_spec_tree_t tree;
+
+    char** tokensdata = (char**) tokens.data;
+
+    darr_init(&tree.nodes, sizeof(bnf_spec_node_t));
+    for(i=0; i<tokens.len; i++)
+    {
+        printf("Token: \"%s\".\n", tokensdata[i]);     
+    }
+
+    return tree; 
+}
+
 bool bnf_loadspec(char* filepath)
 {
+    int i;
+
     FILE* ptr;
     char* str;
     darr_t tokens; // Array of char*
+    char** tokensdata;
 
     ptr = fopen(filepath, "r");
     if(!ptr)
@@ -94,16 +114,26 @@ bool bnf_loadspec(char* filepath)
         return false;
     }
 
-    str = 0;
-    while(!str || str[0])
+    darr_init(&tokens, sizeof(char*));
+    while(true)
     {
-        if(str)
-            free(str);
-
         str = bnf_nexttoken(ptr);
-        if(str[0])
-            puts(str);
+        if(!str[0])
+            break;
+
+        darr_push(&tokens, &str);
     }
+    free(str);
+
     (void) fclose(ptr);
+   
+    bnf_nodepass(tokens);
+
+    tokensdata = (char**) tokens.data;
+    for(i=0; i<tokens.len; i++)
+        free(tokensdata[i]);
+
+    free(tokensdata); 
+        
     return true;
 }
