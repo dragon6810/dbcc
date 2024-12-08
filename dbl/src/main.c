@@ -4,7 +4,7 @@
 
 #include "globals.h"
 #include "error.h"
-#include "token.h"
+#include "lexer.h"
 #include "bnf.h"
 
 bool linking = true;
@@ -15,7 +15,6 @@ void opensource(FILE* ptr)
 
     unsigned long int fsize;
     char* buff;
-    darr_t arr;
 
     fseek(ptr, 0, SEEK_END);
     fsize = ftell(ptr);
@@ -26,12 +25,8 @@ void opensource(FILE* ptr)
     (void) fseek(ptr, 0, SEEK_SET);
     (void) fread(buff, 1, fsize, ptr);
 
-    arr = tokenize(buff);
     (void) bnf_loadspec("c.bnf"); 
-    for(i=0; i<arr.len; i++)
-        (void) free(((token_t*) arr.data)[i].payload);
 
-    (void) free(arr.data);
     (void) free(buff);
 }
 
