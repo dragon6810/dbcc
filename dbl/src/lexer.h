@@ -2,8 +2,10 @@
 #define _lexer_h
 
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "darr.h"
+#include "bnf.h"
 typedef struct token_s
 {
     bnf_spec_node_t *node;     // The bnf leaf this token is an instance of
@@ -30,5 +32,7 @@ void tkn_init(void);
 //  - tokenfiles
 //
 bool tkn_loadfile(FILE* ptr);
+
+bool print_tokens(void);
 
 #endif

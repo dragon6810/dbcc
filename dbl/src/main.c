@@ -49,5 +49,7 @@ int main(int argc, char** argv)
         fclose(ptr);
     }
 
+    print_tokens();
+
     return 0;
 }

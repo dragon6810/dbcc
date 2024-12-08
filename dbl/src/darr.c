@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+#include "error.h"
+
 void darr_init(darr_t* arr, size_t itemsize)
 {
     arr->itemsize = itemsize;
@@ -11,6 +13,11 @@ void darr_init(darr_t* arr, size_t itemsize)
 
 void darr_push(darr_t* arr, void* item)
 {
+    if(!arr->itemsize)
+    {
+        Error("darr_push: itemsize is 0, have you initialized the array?.\n");
+    }
+
     if(!arr->data)
     {
         arr->data = malloc(arr->itemsize);

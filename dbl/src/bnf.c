@@ -4,29 +4,9 @@
 #include <string.h>
 
 #include "error.h"
+#include "textutils.h"
 
 bnf_spec_tree_t bnf_spec;
-
-void bnf_skipline(FILE* ptr)
-{
-    char c;
-
-    while((c = fgetc(ptr)) != '\n' && c != EOF);
-}
-
-bool bnf_skipwhitespace(FILE* ptr)
-{
-    char c;
-    bool did;
-
-    did = false;
-    while((c = fgetc(ptr)) <= 32 && c != EOF)
-        did = true;
-
-    if(c != EOF)
-        fseek(ptr, -1, SEEK_CUR);
-    return did;
-}
 
 char* bnf_nexttoken(FILE* ptr)
 {
@@ -43,18 +23,18 @@ char* bnf_nexttoken(FILE* ptr)
     {
         either = false;
         
-        if(bnf_skipwhitespace(ptr))
+        if(txt_skipwhitespace(ptr))
             either = true;
         
         if((c = fgetc(ptr)) == '#')
         {
-            bnf_skipline(ptr);
+            txt_skipline(ptr);
             either = true;
         }
         else if(c != EOF)
             fseek(ptr, -1, SEEK_CUR);
     
-        if(bnf_skipwhitespace(ptr))
+        if(txt_skipwhitespace(ptr))
             either = true;
     }
     
