@@ -337,7 +337,7 @@ bool bnf_loadspec(char* filepath)
     }
     free(str);
 
-    (void) fclose(ptr);
+    fclose(ptr);
    
     tree = bnf_nodepass(tokens);
     bnf_edgepass(&tree, tokens);

@@ -29,6 +29,13 @@ typedef struct bnf_spec_tree_s
 
 extern bnf_spec_tree_t bnf_spec;
 
+//
+// bnf_loadspec
+//  - Loads a bnf specification from a file
+//
+// Side Affects:
+//  - bnf_spec
+//
 bool bnf_loadspec(char* filepath);
 
 #endif
