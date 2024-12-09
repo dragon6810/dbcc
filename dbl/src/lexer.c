@@ -125,9 +125,13 @@ bool tkn_loadfile(FILE* ptr)
         if (c == '"') 
         {
             insidequotes = !insidequotes;
+            printf("Inside quotes: %d\n", insidequotes);
         }
 
         size_t len;
+
+        bool terminatetoken = false;
+        bool addtotoken = true;
 
         switch (c) 
         {
@@ -145,46 +149,60 @@ bool tkn_loadfile(FILE* ptr)
             case '\r':
             case '\v':
             case '\f':
+                terminatetoken = true;
+                addtotoken = false;
+                break;
             case ';':
-                if (!insidequotes) 
-                {
-                    if (strlen(str) > 0) 
-                    {
-                        // Create a new token from str
-                        newtoken.linenum = linenum;
-                        newtoken.charnum = charnum - strlen(str);
-                        newtoken.realnum = realnum - strlen(str);
-                        newtoken.payload = str;  // Pass ownership of str
-                        newtoken.node = NULL;
-
-                        // Add the token to the file
-                        darr_push(&newfile.tokens, &newtoken);
-
-                        // Reset `str` to a new empty string
-                        str = calloc(1, 1);
-                        if (!str) 
-                        {
-                            // Handle allocation error
-                            return false;
-                        }
-                    }
-                }
+                terminatetoken = true;
+                addtotoken = true;
                 break;
-
             default:
-                // Add the character to `str`
-                len = strlen(str);
-                char* temp = realloc(str, len + 2); // Allocate space for new char and null terminator
-                if (!temp) 
-                {
-                    // Handle reallocation error
-                    free(str);
-                    return false;
-                }
-                str = temp;
-                str[len] = c;
-                str[len + 1] = '\0'; // Null terminate the string
-                break;
+                terminatetoken = false;
+                addtotoken = true;
+        }
+
+        // Override if inside quotes
+        if (insidequotes)
+        {
+            terminatetoken = false;
+            addtotoken = true;
+        }
+
+        if (addtotoken)
+        {
+            // Add the character to `str`
+            len = strlen(str);
+            char* temp = realloc(str, len + 2); // Allocate space for new char and null terminator
+            if (!temp) 
+            {
+                // Handle reallocation error
+                free(str);
+                return false;
+            }
+            str = temp;
+            str[len] = c;
+            str[len + 1] = '\0'; // Null terminate the string
+        }
+
+        if (terminatetoken && strlen(str) > 0)
+        {
+            // Create a new token from str
+            newtoken.linenum = linenum;
+            newtoken.charnum = charnum - strlen(str);
+            newtoken.realnum = realnum - strlen(str);
+            newtoken.payload = str;  // Pass ownership of str
+            newtoken.node = NULL;
+
+            // Add the token to the file
+            darr_push(&newfile.tokens, &newtoken);
+
+            // Reset `str` to a new empty string
+            str = calloc(1, 1);
+            if (!str) 
+            {
+                // Handle allocation error
+                return false;
+            }
         }
 
         // Now check the string to see if it contains one or more tokens. There are multiple cases:
