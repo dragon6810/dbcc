@@ -82,11 +82,13 @@ bool tkn_loadfile(FILE* ptr)
     token_t newtoken;
     unsigned long int linenum, charnum, realnum;
     bool ignorerestofline;
+    bool insidequotes;
 
     linenum = 1;
     charnum = 1;
     realnum = 0;
     ignorerestofline = false;
+    insidequotes = false;
 
     newfile.filename = "test";
     darr_init(&newfile.tokens, sizeof(token_t));
@@ -115,8 +117,18 @@ bool tkn_loadfile(FILE* ptr)
             charnum++;
         }
 
+        if (ignorerestofline) 
+        {
+            continue;
+        }
+
+        if (c == '"') 
+        {
+            insidequotes = !insidequotes;
+        }
+
         // If a space or a semicolon is encountered, create a new token from str
-        if (isspace(c) || c == ';') 
+        if ((isspace(c) || c == ';' ) && !insidequotes) 
         {
             if (strlen(str) > 0) 
             {
