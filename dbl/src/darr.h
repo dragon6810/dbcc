@@ -14,4 +14,6 @@ typedef struct darr_s
 void darr_init(darr_t* arr, size_t itemsize); 
 void darr_push(darr_t* arr, void* item);
 
+darr_t darr_copy(darr_t* arr);
+
 #endif

@@ -38,3 +38,16 @@ void darr_push(darr_t* arr, void* item)
     memcpy(((char*) arr->data) + arr->itemsize * arr->len, item, arr->itemsize);
     arr->len++;
 }
+
+darr_t darr_copy(darr_t* arr)
+{
+    darr_t newarr;
+
+    newarr.itemsize = arr->itemsize;
+    newarr.len = arr->len;
+    newarr.realsize = arr->realsize;
+    newarr.data = malloc(arr->realsize * arr->itemsize);
+    memcpy(newarr.data, arr->data, arr->realsize * arr->itemsize);
+
+    return newarr;
+}
