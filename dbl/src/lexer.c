@@ -134,8 +134,8 @@ bool tkn_loadfile(FILE* ptr)
             {
                 // Create a new token from str
                 newtoken.linenum = linenum;
-                newtoken.charnum = charnum;
-                newtoken.realnum = realnum;
+                newtoken.charnum = charnum - strlen(str);
+                newtoken.realnum = realnum - strlen(str);
                 newtoken.payload = str;  // Pass ownership of str
                 newtoken.node = NULL;
 
