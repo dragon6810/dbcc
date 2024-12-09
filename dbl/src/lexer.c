@@ -127,45 +127,73 @@ bool tkn_loadfile(FILE* ptr)
             insidequotes = !insidequotes;
         }
 
-        // If a space or a semicolon is encountered, create a new token from str
-        if ((isspace(c) || c == ';' ) && !insidequotes) 
+        size_t len;
+
+        switch (c) 
         {
-            if (strlen(str) > 0) 
-            {
-                // Create a new token from str
-                newtoken.linenum = linenum;
-                newtoken.charnum = charnum - strlen(str);
-                newtoken.realnum = realnum - strlen(str);
-                newtoken.payload = str;  // Pass ownership of str
-                newtoken.node = NULL;
-
-                // Add the token to the file
-                darr_push(&newfile.tokens, &newtoken);
-
-                // Reset `str` to a new empty string
-                str = calloc(1, 1);
-                if (!str) 
+            // There are several discrete categories of behavior for a character:
+            // - The new character indicates that the existing string is a complete token
+            //   and the new character is not to be parsed, eg unquoted whitespace
+            // - The new character indicates that the existing string is a complete token
+            //   and the new character is to be parsed into str, eg ;(){}, etc
+            // - The new character is to be added to the existing string without 
+            //   completing a token, eg a-z, A-Z, 0-9, etc
+            // NOT ALL CASES ABOVE ARE HANDLED YET
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\r':
+            case '\v':
+            case '\f':
+            case ';':
+                if (!insidequotes) 
                 {
-                    // Handle allocation error
+                    if (strlen(str) > 0) 
+                    {
+                        // Create a new token from str
+                        newtoken.linenum = linenum;
+                        newtoken.charnum = charnum - strlen(str);
+                        newtoken.realnum = realnum - strlen(str);
+                        newtoken.payload = str;  // Pass ownership of str
+                        newtoken.node = NULL;
+
+                        // Add the token to the file
+                        darr_push(&newfile.tokens, &newtoken);
+
+                        // Reset `str` to a new empty string
+                        str = calloc(1, 1);
+                        if (!str) 
+                        {
+                            // Handle allocation error
+                            return false;
+                        }
+                    }
+                }
+                break;
+
+            default:
+                // Add the character to `str`
+                len = strlen(str);
+                char* temp = realloc(str, len + 2); // Allocate space for new char and null terminator
+                if (!temp) 
+                {
+                    // Handle reallocation error
+                    free(str);
                     return false;
                 }
-            }
-        } 
-        else 
-        {
-            // Add the character to `str`
-            size_t len = strlen(str);
-            char* temp = realloc(str, len + 2); // Allocate space for new char and null terminator
-            if (!temp) 
-            {
-                // Handle reallocation error
-                free(str);
-                return false;
-            }
-            str = temp;
-            str[len] = c;
-            str[len + 1] = '\0'; // Null terminate the string
+                str = temp;
+                str[len] = c;
+                str[len + 1] = '\0'; // Null terminate the string
+                break;
         }
+
+        // Now check the string to see if it contains one or more tokens. There are multiple cases:
+        // - The string is a single token, eg a keyword, a symbol, a number, etc
+        // - The string contains multiple tokens that all need to be parsed, eg ==5
+        // - The string contains a token and non-token characters, eg ;//
+
+        // TODO
+
     }
 
     // Handle any remaining token at the end of the file
