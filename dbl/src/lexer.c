@@ -188,9 +188,10 @@ bool tkn_loadfile(FILE* ptr)
         }
 
         // Now check the string to see if it contains one or more tokens. There are multiple cases:
-        // - The string is a single token, eg a keyword, a symbol, a number, etc
-        // - The string contains multiple tokens that all need to be parsed, eg ==5
-        // - The string contains a token and non-token characters, eg ;//
+        // - The string is a single token, eg a keyword, a symbol, a number, ==, etc
+        // - The string contains multiple tokens that all need to be parsed
+        // - The string contains a token and non-token characters, eg ;// .
+        //   The token is parsed and the non-token characters are ignored
 
         // TODO
 
