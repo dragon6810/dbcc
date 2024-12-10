@@ -16,7 +16,7 @@ HashTable* create_defaults_hash (void)
 {
     HashTable *ht = createHashTable();
 
-        // Storage-class-specifier
+    // Storage-class-specifier
     insert(ht, "auto", "storage-class-specifier");
     insert(ht, "register", "storage-class-specifier");
     insert(ht, "static", "storage-class-specifier");
@@ -123,14 +123,14 @@ char* read_file_to_string(FILE *file) {
     char *buffer = malloc(file_size + 1);
     if (buffer == NULL) {
         perror("Memory allocation failed");
-        return NULL; // No need to close file here, it's the caller's responsibility
+        return NULL; 
     }
 
     size_t bytes_read = fread(buffer, 1, file_size, file);
     if (bytes_read != file_size) {
         perror("Error reading file");
         free(buffer);
-        return NULL; // No need to close file here
+        return NULL; 
     }
 
     buffer[file_size] = '\0';
@@ -154,12 +154,11 @@ bool tkn_loadfile(FILE* ptr)
 
     HashTable *defaults_hash = create_defaults_hash();
 
-    newfile.filename = "test";
+    newfile.filename = "test"; 
     darr_init(&newfile.tokens, sizeof(token_t));
 
-    char* str = calloc(1, 1); // Initialize str to an empty string
+    char* str = calloc(1, 1); 
     if (!str) {
-        // Handle allocation error
         return false;
     }
 
@@ -189,14 +188,30 @@ bool tkn_loadfile(FILE* ptr)
             insidequotes = !insidequotes;
         }
 
-        // Find the longest match in the defaults_hash, if there is a match
-        // then create a token from str if it is non empty and then create a token for the match
-        // and add both to the file
-        // If there is no match, add the character to str
-        // If the character is a whitespace character, then create a token from str if it is non empty
-        // and then add the character to str
+        if (insidequotes) 
+        {
+            int len = strlen(str);
+            char* temp = realloc(str, len + 2); 
+            if (!temp) {
+                free(str);
+                return false;
+            }
+            str = temp;
+            str[len] = filetext[i];
+            str[len + 1] = '\0';
+            i++;
+            continue; 
+        }
 
-        // Find the longest match in the defaults_hash
+        // Comment handling
+        if (filetext[i] == '/' && filetext[i + 1] == '/') 
+        {
+            ignorerestofline = true;
+            i += 2; 
+            continue;
+        }
+
+
         int j = 0;
         int matchlen = 0;
         char* matchstr = NULL;
@@ -205,7 +220,6 @@ bool tkn_loadfile(FILE* ptr)
             char* substr = calloc(j - i + 1, 1);
             if (!substr) 
             {
-                // Handle allocation error
                 return false;
             }
             memcpy(substr, filetext + i, j - i);
@@ -234,29 +248,23 @@ bool tkn_loadfile(FILE* ptr)
             }
         }
 
-        // If a token was found above or the character is a whitespace character, then create a token from str if it is non empty
-
         if (matchstr || isspace(filetext[i]))
         {
-            // Create a new token from str if it is not empty
             if (strlen(str) > 0) 
             {
                 newtoken.linenum = linenum;
                 newtoken.charnum = charnum - strlen(str);
                 newtoken.realnum = i - strlen(str);
-                newtoken.payload = strdup(str);  // Pass ownership of str
+                newtoken.payload = strdup(str); 
                 newtoken.tokentype = "dynamic";
 
                 printf("ingesting string %s\n", newtoken.payload);
 
-                // Add the token to the file
                 darr_push(&newfile.tokens, &newtoken);
 
-                // Reset `str` to a new empty string
                 str = calloc(1, 1);
                 if (!str) 
                 {
-                    // Handle allocation error
                     return false;
                 }
             }
@@ -264,17 +272,14 @@ bool tkn_loadfile(FILE* ptr)
 
         if (matchstr)
         {
-            // Create a new token from the matched string
             newtoken.linenum = linenum;
             newtoken.charnum = charnum - strlen(matchstr);
             newtoken.realnum = i - strlen(matchstr);
-            newtoken.payload = matchstr;  // Pass ownership
+            newtoken.payload = matchstr; 
             newtoken.tokentype = get(defaults_hash, matchstr);
 
-            // Add the token to the file
             darr_push(&newfile.tokens, &newtoken);
 
-            // Advance the index by the length of the matched string
             i += strlen(matchstr);
             continue;
         }
@@ -287,21 +292,34 @@ bool tkn_loadfile(FILE* ptr)
 
         printf(" adding char %c\n", filetext[i]);
 
-        // If we didn't find a match, add the character to the str
         int len = strlen(str);
-        char* temp = realloc(str, len + 2); // Allocate space for new char and null terminator
+        char* temp = realloc(str, len + 2); 
         if (!temp) 
         {
-            // Handle reallocation error
             free(str);
             return false;
         }
         str = temp;
         str[len] = filetext[i];
-        str[len + 1] = '\0'; // Null terminate the string
+        str[len + 1] = '\0'; 
 
         i++;
     }
+
+    // If there's remaining content in `str` after the loop, create a token for it
+    if (strlen(str) > 0) {
+        newtoken.linenum = linenum;
+        newtoken.charnum = charnum - strlen(str);
+        newtoken.realnum = i - strlen(str);
+        newtoken.payload = strdup(str);
+        newtoken.tokentype = "dynamic";
+
+        printf("ingesting string %s\n", newtoken.payload);
+
+        darr_push(&newfile.tokens, &newtoken);
+    }
+
+    free(str); // Free the allocated memory for `str`
 
     darr_push(&tokenfiles, &newfile);
 
