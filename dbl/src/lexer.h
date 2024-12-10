@@ -6,9 +6,10 @@
 
 #include "darr.h"
 #include "bnf.h"
+#include "hashmap.h"
 typedef struct token_s
 {
-    bnf_spec_node_t *node;     // The bnf leaf this token is an instance of
+    char *tokentype;           // The token type
     char *payload;             // The actual token
     unsigned long int linenum; // The line number this token is on
     unsigned long int charnum; // The character within the line this token is on
