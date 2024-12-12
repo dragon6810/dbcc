@@ -5,13 +5,20 @@
 #include "globals.h"
 #include "error.h"
 #include "lexer.h"
+#include "lexer_bnf.h"
 #include "bnf.h"
 
 bool linking = true;
 
-void opensource(FILE* ptr)
+void opensource(char* filename)
 {
+    FILE* ptr;
+    
+    ptr = fopen(filename, "r");
     tkn_loadfile(ptr);
+    fclose(ptr);
+
+    tkn_bnf_loadfile(filename);
 }
 
 int main(int argc, char** argv)
@@ -40,16 +47,12 @@ int main(int argc, char** argv)
 
         if(!insources)
             Error("unexpected arg \"%s\".\n", argv[i]);
-    
-        ptr = fopen(argv[i], "r");
-        if(!ptr)
-            Error("can't open file \"%s\".\n", argv[i]);
 
-        opensource(ptr);
+        opensource(argv[i]);
         fclose(ptr);
     }
 
-    print_tokens();
+    //print_tokens();
 
     return 0;
 }

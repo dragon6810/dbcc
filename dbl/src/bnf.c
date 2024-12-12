@@ -26,7 +26,7 @@ char* bnf_nexttoken(FILE* ptr)
         if(txt_skipwhitespace(ptr))
             either = true;
         
-        if((c = fgetc(ptr)) == '#')
+        if((c = fgetc(ptr)) == '#' && linestart)
         {
             txt_skipline(ptr);
             either = true;

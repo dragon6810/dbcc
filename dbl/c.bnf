@@ -1,10 +1,20 @@
 # This grammar was adapted from Section A13 of The C programming language, 2nd edition, by Brian W. Kernighan and Dennis M. Ritchie,Prentice Hall, 1988.
 
 # The syntax of C in Backus-Naur Form
+# plus we added compiler directives
+
 <translation-unit> ::= {<external-declaration>}*
 
 <external-declaration> ::= <function-definition>
                          | <declaration>
+                         | <preprocess-directive>
+
+<preprocess-directive> ::= # <preprocess-body>
+
+<preprocess-body> ::= <include-directive>
+
+<include-directive> ::= " <identifier> "
+                      | < <identifier> >
 
 <function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
 
