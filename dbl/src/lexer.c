@@ -211,7 +211,7 @@ bool tkn_loadfile(FILE* ptr)
             continue;
         }
 
-
+        // See if the string from i to j is a known token
         int j = 0;
         int matchlen = 0;
         char* matchstr = NULL;
@@ -247,6 +247,21 @@ bool tkn_loadfile(FILE* ptr)
                 free(substr);
             }
         }
+
+        // If matchstr is not NULL, starts with a letter, and follows a letter, then it falls within a word
+        // and should not be considered a token. For example, printf should parse as printf, not as pr, int, f.
+        if (i>0 && matchstr && isalpha(filetext[i - 1]) && isalpha(filetext[i])) 
+        {
+            free(matchstr);
+            matchstr = NULL;
+        }
+
+        // Now do the same at the end of the string
+        if ((i+strlen(str)) < strlen(filetext) && matchstr && isalpha(filetext[i + strlen(str)]) && isalpha(filetext[i + strlen(str) + 1])) 
+        {
+            free(matchstr);
+            matchstr = NULL;
+        } 
 
         if (matchstr || isspace(filetext[i]))
         {
