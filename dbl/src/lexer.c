@@ -166,6 +166,37 @@ bool tkn_loadfile(FILE* ptr)
     while (i<strlen(filetext)) 
     {
 
+        // Parse preprocessor directives
+        // TODO: allow # to follow whitespace
+        if (filetext[i] == '#' && charnum == 1)
+        {
+            // Parse the entire line as a single token type "preprocessor-directive"
+            int j = i;
+            while (filetext[j] != '\n' && j < strlen(filetext))
+            {
+                j++;
+            }
+
+            newtoken.linenum = linenum;
+            newtoken.charnum = charnum;
+            newtoken.realnum = i;
+            newtoken.payload = calloc(j - i + 1, 1);
+            if (!newtoken.payload) 
+            {
+                return false;
+            }
+            memcpy(newtoken.payload, filetext + i, j - i);
+            newtoken.tokentype = "preprocessor-directive";
+
+            darr_push(&newfile.tokens, &newtoken);
+
+            i = j;
+            linenum++;
+            charnum = 1;
+            i++;
+            continue;
+        }
+
         if (filetext[i] == '\n') 
         {
             linenum++;
