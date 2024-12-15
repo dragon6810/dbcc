@@ -20,3 +20,7 @@ void txt_skipline(FILE* ptr)
 
     while((c = fgetc(ptr)) != '\n' && c != EOF);
 }
+
+int is_valid_identifier_char(char c) {
+    return isalpha(c) || isdigit(c) || c == '_';
+}

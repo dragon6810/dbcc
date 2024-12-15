@@ -250,14 +250,14 @@ bool tkn_loadfile(FILE* ptr)
 
         // If matchstr is not NULL, starts with a letter, and follows a letter, then it falls within a word
         // and should not be considered a token. For example, printf should parse as printf, not as pr, int, f.
-        if (i>0 && matchstr && isalpha(filetext[i - 1]) && isalpha(filetext[i])) 
+        if (i>0 && matchstr && is_valid_identifier_char(filetext[i - 1]) && is_valid_identifier_char(filetext[i])) 
         {
             free(matchstr);
             matchstr = NULL;
         }
 
         // Now do the same at the end of the string
-        if ((i+strlen(str)) < strlen(filetext) && matchstr && isalpha(filetext[i + strlen(str)]) && isalpha(filetext[i + strlen(str) + 1])) 
+        if ((i+strlen(str)) < strlen(filetext) && matchstr && is_valid_identifier_char(filetext[i + strlen(str)]) && is_valid_identifier_char(filetext[i + strlen(str) + 1])) 
         {
             free(matchstr);
             matchstr = NULL;

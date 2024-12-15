@@ -16,5 +16,9 @@ int main()
         printf("z is not greater than 10\n");
     }
 
+    int y_new = 20;
+    int z2 = x + y_new;
+    printf("z2 is %d\n", z2);
+
     return 0;
 }

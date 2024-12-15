@@ -1,6 +1,7 @@
 .vscode/
 dbl/bin/
 hello/bin/
+.DS_Store
 
 
 # Prerequisites
