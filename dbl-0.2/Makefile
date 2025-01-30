@@ -1,5 +1,5 @@
 CC := clang -c
-CC_FLAGS := -D_POSIX_C_SOURCE=200809L -Wall -O3 -g -std=c11 -MMD -MP -fsanitize=address
+CC_FLAGS := -D_POSIX_C_SOURCE=200809L -Wall -Werror -O3 -g -std=c11 -MMD -MP -fsanitize=address
 
 LD := clang
 LD_FLAGS := -fsanitize=address

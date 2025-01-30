@@ -50,10 +50,10 @@ void assert_printstacktrace(void)
         fprintf(stderr, "%s\n", symbols[i]);
 
 #ifdef APPLE
-        baseaddr = _dyld_get_image_header(0);
+        baseaddr = (void*) _dyld_get_image_header(0);
         //printf("base adress: %p.\n", baseaddr);
-        syscmd = malloc(snprintf(0, 0, "atos -o %s %p", progpath, buff[i] - baseaddr) + 1);
-        sprintf(syscmd, "atos -o %s %p", progpath, buff[i] - baseaddr);
+        syscmd = malloc(snprintf(0, 0, "atos -o %s %p", progpath, (void*) (buff[i] - baseaddr)) + 1);
+        sprintf(syscmd, "atos -o %s %p", progpath, (void*) (buff[i] - baseaddr));
 #endif
         pipe = popen(syscmd, "r");
         

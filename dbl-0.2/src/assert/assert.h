@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-inline void assert_printstacktrace(void);
+void assert_printstacktrace(void);
 
 #define assert(expr) ((expr) ? (void)0 : \
                       (fprintf(stderr, "Assertion Failed: \"%s\", file: \"%s\", line: %d.\n", \

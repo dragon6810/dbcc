@@ -6,7 +6,7 @@ mkdir -p "$RUN_Dir"
 
 if make; then
     cd "$RUN_DIR"
-    ../bin/dbc main.c
+    ../bin/dbc -v main.c
 
     exit 0
 fi
