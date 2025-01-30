@@ -7,14 +7,6 @@
 
 <external-declaration> ::= <function-definition>
                          | <declaration>
-                         | <preprocess-directive>
-
-<preprocess-directive> ::= # <preprocess-body>
-
-<preprocess-body> ::= <include-directive>
-
-<include-directive> ::= " <identifier> "
-                      | < <identifier> >
 
 <function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
 

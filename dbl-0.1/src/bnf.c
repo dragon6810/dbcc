@@ -75,7 +75,7 @@ char* bnf_removeanglebrackets(char* str)
     if(str[end - 1] == '>')
         end--;
 
-    newstr = malloc(end - start);
+    newstr = malloc(end - start + 1);
     memcpy(newstr, str + start, end - start);
     newstr[end - start] = 0;
 

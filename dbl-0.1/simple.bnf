@@ -1,0 +1,5 @@
+<translation_unit> ::= <sentence-list>
+
+<sentence-list> ::= <sentence> | <sentence> <sentence-list>
+
+<sentence> ::= <identifier> .

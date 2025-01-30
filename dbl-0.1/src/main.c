@@ -15,7 +15,7 @@ void opensource(char* filename)
     FILE* ptr;
     
     ptr = fopen(filename, "r");
-    tkn_loadfile(ptr);
+    // tkn_loadfile(ptr);
     fclose(ptr);
 
     tkn_bnf_loadfile(filename);
@@ -28,7 +28,7 @@ int main(int argc, char** argv)
     bool insources;
     FILE* ptr;
 
-    bnf_loadspec("c.bnf"); 
+    bnf_loadspec("simple.bnf"); 
     tkn_init();
 
     for(i=1, insources=false; i<argc; i++)
