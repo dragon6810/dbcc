@@ -170,23 +170,33 @@ void lexer_tknfile_findnexttkn(void)
 
     int len;
     char str[LEXER_MAXHARDTOKENLEN];
+    int longestmatch, longestlen;
 
+    longestmatch = -1;
+    longestlen = 0;
     for(i=LEXER_TOKENTYPE_STARTOFENUM; i<=LEXER_TOKENTYPE_ENDOFENUM; i++)
     {
         if(!(len = lexer_tknfile_tknmatches(i, curchar)))
             continue;
-        
-        lexer_tkntypetostring(i, str);
-        stateprogress = len;
-        puts(str);
+        if(len <= longestlen)
+            continue;
 
-        return;
+        longestmatch = i;
+        longestlen = len;
     }
+
+    if(!longestlen)
+        return;
+
+    lexer_tkntypetostring(longestmatch, str);
+    state = longestmatch;
+    stateprogress = longestlen;
+    puts(str);
 }
 
 bool lexer_tknfile_eatchar(void)
 {
-    if(!curchar[0])
+    if(!curchar || !curchar[0])
     {
         state = LEXER_TOKENTYPE_EOF;
         return true;
@@ -219,8 +229,6 @@ bool lexer_tknfile(srcfile_t* srcfile)
         if(!lexer_tknfile_eatchar())
             return false;
     }
-
-    puts("");
 
     return true;
 }

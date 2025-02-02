@@ -48,7 +48,7 @@ typedef enum
     LEXER_TOKENTYPE_COMMA,        // ,
     LEXER_TOKENTYPE_COLON,        // :
     LEXER_TOKENTYPE_SEMICOLON,    // ;
-    LEXER_TOKENTYPE_POINTER,      // *
+    LEXER_TOKENTYPE_ASTERISK,     // *
     LEXER_TOKENTYPE_AMPERSAND,    // &
     LEXER_TOKENTYPE_ASSIGN,       // =
     LEXER_TOKENTYPE_NOT,          // !
@@ -68,8 +68,6 @@ typedef enum
     LEXER_TOKENTYPE_MULT,         // *
     LEXER_TOKENTYPE_DIV,          // /
     LEXER_TOKENTYPE_MOD,          // %
-    LEXER_TOKENTYPE_UNARYPLUS,    // + (unary)
-    LEXER_TOKENTYPE_UNARYMINUS,   // - (unary)
     LEXER_TOKENTYPE_INCREMENT,    // ++
     LEXER_TOKENTYPE_DECREMENT,    // --
     LEXER_TOKENTYPE_PLUSEQUALS,   // +=

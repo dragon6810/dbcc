@@ -41,7 +41,7 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_SEMICOLON:
         strcpy(str, ";");
         break;
-    case LEXER_TOKENTYPE_POINTER:
+    case LEXER_TOKENTYPE_ASTERISK:
         strcpy(str, "*");
         break;
     case LEXER_TOKENTYPE_AMPERSAND:
@@ -211,12 +211,6 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
         break;
     case LEXER_TOKENTYPE_MOD:
         strcpy(str, "\%");
-        break;
-    case LEXER_TOKENTYPE_UNARYPLUS:
-        strcpy(str, "+");
-        break;
-    case LEXER_TOKENTYPE_UNARYMINUS:
-        strcpy(str, "-");
         break;
     case LEXER_TOKENTYPE_INCREMENT:
         strcpy(str, "++");
