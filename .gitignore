@@ -2,6 +2,7 @@
 dbl/bin/
 hello/bin/
 
+*.swp
 
 # Prerequisites
 *.d

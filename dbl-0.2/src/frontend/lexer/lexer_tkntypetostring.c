@@ -9,11 +9,11 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
 {
     char str[LEXER_MAXHARDTOKENLEN];
 
-    if(lexer_tknoneofmany(type, 3, LEXER_TOKENTYPE_IDENTIFIER, LEXER_TOKENTYPE_STRING, LEXER_TOKENTYPE_CONSTANT, LEXER_TOKENTYPE_EOF))
-        return 0;
-
     switch(type)
     {
+    case LEXER_TOKENTYPE_EOF:
+        strcpy(str, "eof");
+        break;
     case LEXER_TOKENTYPE_OPENBRACKET:
         strcpy(str, "[");
         break;
@@ -41,7 +41,7 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_SEMICOLON:
         strcpy(str, ";");
         break;
-    case LEXER_TOKENTYPE_ASTERISK:
+    case LEXER_TOKENTYPE_POINTER:
         strcpy(str, "*");
         break;
     case LEXER_TOKENTYPE_AMPERSAND:
@@ -134,6 +134,9 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_ENUM:
         strcpy(str, "enum");
         break;
+    case LEXER_TOKENTYPE_EXTERN:
+        strcpy(str, "extern");
+        break;
     case LEXER_TOKENTYPE_FLOAT:
         strcpy(str, "float");
         break;
@@ -156,7 +159,7 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
         strcpy(str, "register");
         break;
     case LEXER_TOKENTYPE_RETURN:
-        strcpy(str, "RETURN");
+        strcpy(str, "return");
         break;
     case LEXER_TOKENTYPE_SHORT:
         strcpy(str, "short");
@@ -190,6 +193,9 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
         break;
     case LEXER_TOKENTYPE_WHILE:
         strcpy(str, "while");
+        break;
+    case LEXER_TOKENTYPE_STRING:
+        strcpy(str, "string");
         break;
     case LEXER_TOKENTYPE_PLUS:
         strcpy(str, "+");
@@ -262,6 +268,12 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
         break;
     case LEXER_TOKENTYPE_BITNOTEQ:
         strcpy(str, "~=");
+        break;
+    case LEXER_TOKENTYPE_IDENTIFIER:
+        strcpy(str, "identifier");
+        break;
+    case LEXER_TOKENTYPE_CONSTANT:
+        strcpy(str, "constant");
         break;
     default:
         str[0] = 0;

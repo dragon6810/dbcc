@@ -60,7 +60,5 @@ bool lexer_tknfile(srcfile_t* srcfile)
             return false;
     }
 
-    puts("");
-
     return true;
 }

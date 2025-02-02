@@ -23,6 +23,7 @@ bool srcfile_load(char* path, srcfile_t* srcfile)
 
     srcfile->rawtext = malloc(len + 1);
     fread(srcfile->rawtext, 1, len, ptr);
+    srcfile->rawtext[len] = 0;
 
     fclose(ptr);
 
