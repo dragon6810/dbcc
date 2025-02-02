@@ -1,35 +1,9 @@
-#include <frontend/lexer/lexer.h>
-
-#include <string.h>
-
-#include <assert/assert.h>
-#include <math/math.h>
-#include <srcfile/srcfile.h>
-
-#define LEXER_TKNFILE_COMMENTONELINER 1
-#define LEXER_TKNFILE_COMMENTCROSSLINE 2
-
 lexer_tokentype_e state = LEXER_TOKENTYPE_INVALID;
 char *curchar = NULL;
 unsigned long int stateprogress = 0;
-int incomment = 0; 
-char *filename = NULL;
-int line, col = 1;
 
 bool lexer_tknfile_charallowedinidentifier(char c, bool first)
 {
-    if(MATH_INRANGE(c, 'a', 'z'))
-        return true;
-
-    if(MATH_INRANGE(c, 'A', 'Z'))
-        return true;
-
-    if(!first && MATH_INRANGE(c, '0', '9'))
-        return true;
-
-    if(c == '_')
-        return true;
-
     return false;
 }
 
@@ -55,7 +29,6 @@ int lexer_tknfile_isidentifier(char* str)
     while(lexer_tknfile_charallowedinidentifier(*strend, false));
     stringlen = strend - str;
 
-    // Make sure it doesn't exactly match a keyword
     for(i=LEXER_TOKENTYPE_STARTOFKEYWORDS; i<=LEXER_TOKENTYPE_ENDOFKEYWORDS; i++)
     {
         lexer_tkntypetostring(i, keywordstr);
@@ -87,7 +60,6 @@ int lexer_tknfile_isconstant(char* str)
         if(!strend[0])
             break;
 
-        if(strend[0] == '.')
         {
             if(encountereddot)
                 return 0;
@@ -96,13 +68,11 @@ int lexer_tknfile_isconstant(char* str)
             continue;
         }
 
-        if(strend[0] == 'f' || strend[0] == 'F' || strend[0] == 'd' || strend[0] == 'D')
         {
             strend++;
             break;
         }
 
-        if(!MATH_INRANGE(strend[0], '0', '9'))
             break;
 
         strend++;
@@ -124,7 +94,6 @@ bool lexer_tknfile_ischarcancelled(char* str, char* c)
     {
         c--;
 
-        if(*c != '\\' || i > 1)
             break;
     
         canceled = !canceled;
@@ -144,8 +113,6 @@ int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
 
     if(type == LEXER_TOKENTYPE_IDENTIFIER)
         return lexer_tknfile_isidentifier(str);
-    if(type == LEXER_TOKENTYPE_STRING)
-        return *str == '"';
     if(type == LEXER_TOKENTYPE_CONSTANT)
         return lexer_tknfile_isconstant(str);
 
@@ -161,19 +128,11 @@ int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
 
 char* lexer_tknfile_skipwhitespace(char* str)
 {
-    if(!str)
+    if(!str || !*str)
         return str;
 
     while(*str <= 32 && *str)
-    {
-        col++;
-        if(*str == '\n')
-        {
-            line++;
-            col = 1;
-        }
         str++;
-    }
 
     return str;
 }
@@ -185,7 +144,6 @@ void lexer_tknfile_findnexttkn(void)
     int len;
     char str[LEXER_MAXHARDTOKENLEN];
     int longestmatch, longestlen;
-    char *tokenval;
 
     longestmatch = -1;
     longestlen = 0;
@@ -201,104 +159,30 @@ void lexer_tknfile_findnexttkn(void)
     }
 
     if(!longestlen)
-    {
-        printf("\x1B[31merror in %s: \x1B[0minvalid token start %c at %d:%d.\n", filename, *curchar, line, col); 
-        abort();
-    }
+        return;
 
     lexer_tkntypetostring(longestmatch, str);
     state = longestmatch;
     stateprogress = longestlen;
-    tokenval = malloc(longestlen + 1);
-    memcpy(tokenval, curchar, longestlen);
-    tokenval[longestlen] = 0;
-    printf("token \"%s\" (\"%s\") at %s:%d:%d.\n", tokenval, str, filename, line, col);
-    
-    free(tokenval);
-}
-
-void lexer_tknfile_updatecomment(void)
-{
-    if(!curchar || !*curchar)
-        return;
-
-    if(incomment == 1 && *curchar == '\n')
-    {
-        incomment = 0;
-        line++;
-        col = 1;
-        curchar++;
-        return;
-    }
-
-    if(strlen(curchar) < 2)
-        return;
-
-    if(incomment == 2 && !strncmp("*/", curchar, 2))
-    {
-        incomment = 0;
-        curchar += 2;
-        return;
-    }
-
-    if(!strncmp("//", curchar, 2))
-    {
-        state = LEXER_TOKENTYPE_INVALID;
-        stateprogress = 0;
-        incomment = 1;
-        curchar += 2;
-        return;
-    }
-
-    if(!strncmp("/*", curchar, 2))
-    {
-        state = LEXER_TOKENTYPE_INVALID;
-        stateprogress = 0;
-        incomment = 2;
-        curchar += 2;
-        return;
-    }
+    puts(str);
 }
 
 bool lexer_tknfile_eatchar(void)
 {
-    if(!curchar || !curchar[0])
-    {
-        state = LEXER_TOKENTYPE_EOF;
-        return true;
-    }
-
-    if(!incomment)
-        curchar = lexer_tknfile_skipwhitespace(curchar);
-    lexer_tknfile_updatecomment();
-    if(!incomment)
-        curchar = lexer_tknfile_skipwhitespace(curchar);
-
-    if(!stateprogress && !incomment)
-    {
-        if(!*curchar)
-        {
-            state = LEXER_TOKENTYPE_EOF;
-            return true;
-        }
-        lexer_tknfile_findnexttkn();
-    }
-
     if(!curchar[0])
     {
         state = LEXER_TOKENTYPE_EOF;
         return true;
     }
 
-    col++;
-    if(*curchar == '\n')
+    if(!stateprogress)
     {
-        col = 1;
-        line++;
+        curchar = lexer_tknfile_skipwhitespace(curchar);
+        lexer_tknfile_findnexttkn();
     }
+
     curchar++;
-    if(!incomment)
-        stateprogress--;
+    stateprogress--;
 
     return true;
 }
@@ -311,10 +195,7 @@ bool lexer_tknfile(srcfile_t* srcfile)
 
     state = LEXER_TOKENTYPE_INVALID;
     curchar = srcfile->rawtext;
-    incomment = 0;
     stateprogress = 0;
-    filename = srcfile->path;
-    line = col = 1; 
 
     while(state != LEXER_TOKENTYPE_EOF)
     {

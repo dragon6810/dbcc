@@ -86,6 +86,72 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_PERIOD:
         strcpy(str, ".");
         break;
+    case LEXER_TOKENTYPE_PLUS:
+        strcpy(str, "+");
+        break;
+    case LEXER_TOKENTYPE_MINUS:
+        strcpy(str, "-");
+        break;
+    case LEXER_TOKENTYPE_MULT:
+        strcpy(str, "*");
+        break;
+    case LEXER_TOKENTYPE_DIV:
+        strcpy(str, "/");
+        break;
+    case LEXER_TOKENTYPE_MOD:
+        strcpy(str, "\%");
+        break;
+    case LEXER_TOKENTYPE_INCREMENT:
+        strcpy(str, "++");
+        break;
+    case LEXER_TOKENTYPE_DECREMENT:
+        strcpy(str, "--");
+        break;
+    case LEXER_TOKENTYPE_PLUSEQUALS:
+        strcpy(str, "+=");
+        break;
+    case LEXER_TOKENTYPE_MINUSEQUALS:
+        strcpy(str, "-=");
+        break;
+    case LEXER_TOKENTYPE_MULTEQUALS:
+        strcpy(str, "*=");
+        break;
+    case LEXER_TOKENTYPE_DIVEQUALS:
+        strcpy(str, "/=");
+        break;
+    case LEXER_TOKENTYPE_MODEQUALS:
+        strcpy(str, "\%=");
+        break;
+    case LEXER_TOKENTYPE_BITSHIFTL:
+        strcpy(str, "<<");
+        break;
+    case LEXER_TOKENTYPE_BITSHIFTR:
+        strcpy(str, ">>");
+        break;
+    case LEXER_TOKENTYPE_BITAND:
+        strcpy(str, "&");
+        break;
+    case LEXER_TOKENTYPE_BITOR:
+        strcpy(str, "|");
+        break;
+    case LEXER_TOKENTYPE_BITNOT:
+        strcpy(str, "~");
+        break;
+    case LEXER_TOKENTYPE_BITSHIFTLEQ:
+        strcpy(str, "<<=");
+        break;
+    case LEXER_TOKENTYPE_BITSHIFTREQ:
+        strcpy(str, ">>=");
+        break;
+    case LEXER_TOKENTYPE_BITANDEQ:
+        strcpy(str, "&=");
+        break;
+    case LEXER_TOKENTYPE_BITOREQ:
+        strcpy(str, "|=");
+        break;
+    case LEXER_TOKENTYPE_BITNOTEQ:
+        strcpy(str, "~=");
+        break;
     case LEXER_TOKENTYPE_DEFINE:
         strcpy(str, "define");
         break;
@@ -196,72 +262,6 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
         break;
     case LEXER_TOKENTYPE_STRING:
         strcpy(str, "string");
-        break;
-    case LEXER_TOKENTYPE_PLUS:
-        strcpy(str, "+");
-        break;
-    case LEXER_TOKENTYPE_MINUS:
-        strcpy(str, "-");
-        break;
-    case LEXER_TOKENTYPE_MULT:
-        strcpy(str, "*");
-        break;
-    case LEXER_TOKENTYPE_DIV:
-        strcpy(str, "/");
-        break;
-    case LEXER_TOKENTYPE_MOD:
-        strcpy(str, "\%");
-        break;
-    case LEXER_TOKENTYPE_INCREMENT:
-        strcpy(str, "++");
-        break;
-    case LEXER_TOKENTYPE_DECREMENT:
-        strcpy(str, "--");
-        break;
-    case LEXER_TOKENTYPE_PLUSEQUALS:
-        strcpy(str, "+=");
-        break;
-    case LEXER_TOKENTYPE_MINUSEQUALS:
-        strcpy(str, "-=");
-        break;
-    case LEXER_TOKENTYPE_MULTEQUALS:
-        strcpy(str, "*=");
-        break;
-    case LEXER_TOKENTYPE_DIVEQUALS:
-        strcpy(str, "/=");
-        break;
-    case LEXER_TOKENTYPE_MODEQUALS:
-        strcpy(str, "\%=");
-        break;
-    case LEXER_TOKENTYPE_BITSHIFTL:
-        strcpy(str, "<<");
-        break;
-    case LEXER_TOKENTYPE_BITSHIFTR:
-        strcpy(str, ">>");
-        break;
-    case LEXER_TOKENTYPE_BITAND:
-        strcpy(str, "&");
-        break;
-    case LEXER_TOKENTYPE_BITOR:
-        strcpy(str, "|");
-        break;
-    case LEXER_TOKENTYPE_BITNOT:
-        strcpy(str, "~");
-        break;
-    case LEXER_TOKENTYPE_BITSHIFTLEQ:
-        strcpy(str, "<<=");
-        break;
-    case LEXER_TOKENTYPE_BITSHIFTREQ:
-        strcpy(str, ">>=");
-        break;
-    case LEXER_TOKENTYPE_BITANDEQ:
-        strcpy(str, "&=");
-        break;
-    case LEXER_TOKENTYPE_BITOREQ:
-        strcpy(str, "|=");
-        break;
-    case LEXER_TOKENTYPE_BITNOTEQ:
-        strcpy(str, "~=");
         break;
     case LEXER_TOKENTYPE_IDENTIFIER:
         strcpy(str, "identifier");
