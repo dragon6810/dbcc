@@ -6,8 +6,9 @@
 #include <math/math.h>
 #include <srcfile/srcfile.h>
 
-lexer_tokentype_e state = -1;
+lexer_tokentype_e state = LEXER_TOKENTYPE_INVALID;
 char *curchar = NULL;
+unsigned long int stateprogress = 0;
 
 bool lexer_tknfile_charallowedinidentifier(char c, bool first)
 {
@@ -17,7 +18,7 @@ bool lexer_tknfile_charallowedinidentifier(char c, bool first)
     if(MATH_INRANGE(c, 'A', 'Z'))
         return true;
 
-    if(first && MATH_INRANGE(c, '0', '9'))
+    if(!first && MATH_INRANGE(c, '0', '9'))
         return true;
 
     if(c == '_')
@@ -26,7 +27,7 @@ bool lexer_tknfile_charallowedinidentifier(char c, bool first)
     return false;
 }
 
-bool lexer_tknfile_isidentifier(char* str)
+int lexer_tknfile_isidentifier(char* str)
 {
     int i;
 
@@ -35,12 +36,12 @@ bool lexer_tknfile_isidentifier(char* str)
     char keywordstr[LEXER_MAXHARDTOKENLEN];
 
     if(!str)
-        return false;
+        return 0;
     if(!str[0])
-        return false;
+        return 0;
 
     if(!lexer_tknfile_charallowedinidentifier(*str, true))
-        return false;
+        return 0;
 
     strend = str;
     do
@@ -56,25 +57,25 @@ bool lexer_tknfile_isidentifier(char* str)
             continue;
 
         if(!strncmp(keywordstr, str, stringlen))
-            return false;
+            return 0;
     }
 
-    return true;
+    return stringlen;
 }
 
-bool lexer_tknfile_isconstant(char* str)
+int lexer_tknfile_isconstant(char* str)
 {
     char *strend;
     unsigned long int stringlen;
     bool encountereddot;
 
     if(!str)
-        return false;
+        return 0;
     if(!str[0])
-        return false;
+        return 0;
 
     strend = str;
-    encountereddot = finished = false;
+    encountereddot = false;
     while(true)
     {
         if(!strend[0])
@@ -83,7 +84,7 @@ bool lexer_tknfile_isconstant(char* str)
         if(strend[0] == '.')
         {
             if(encountereddot)
-                return false;
+                return 0;
 
             encountereddot = true;
             continue;
@@ -102,18 +103,38 @@ bool lexer_tknfile_isconstant(char* str)
     }
     stringlen = strend - str;
 
-    if(!stringlen)
-        return false;
-
-    return true;
+    return stringlen;
 }
 
-bool lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
+bool lexer_tknfile_ischarcancelled(char* str, char* c)
+{
+    int i;
+
+    bool canceled;
+
+    i = 0;
+    canceled = false;
+    do
+    {
+        c--;
+
+        if(*c != '\\' || i > 1)
+            break;
+    
+        canceled = !canceled;
+    
+        i++;
+    } while(c > str);
+    
+    return canceled;
+}
+
+int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
 {
     char tknstr[LEXER_MAXHARDTOKENLEN];
 
     if(!str || strlen(str) < 1)
-        return false;
+        return 0;
 
     if(type == LEXER_TOKENTYPE_IDENTIFIER)
         return lexer_tknfile_isidentifier(str);
@@ -124,12 +145,43 @@ bool lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
 
     lexer_tkntypetostring(type, tknstr);
     if(strlen(str) < strlen(tknstr))
-        return false;
+        return 0;
 
     if(strncmp(str, tknstr, strlen(tknstr)))
-        return false;
+        return 0;
 
-    return true;
+    return strlen(tknstr);
+}
+
+char* lexer_tknfile_skipwhitespace(char* str)
+{
+    if(!str || !*str)
+        return str;
+
+    while(*str <= 32 && *str)
+        str++;
+
+    return str;
+}
+
+void lexer_tknfile_findnexttkn(void)
+{
+    int i;
+
+    int len;
+    char str[LEXER_MAXHARDTOKENLEN];
+
+    for(i=LEXER_TOKENTYPE_STARTOFENUM; i<=LEXER_TOKENTYPE_ENDOFENUM; i++)
+    {
+        if(!(len = lexer_tknfile_tknmatches(i, curchar)))
+            continue;
+        
+        lexer_tkntypetostring(i, str);
+        stateprogress = len;
+        puts(str);
+
+        return;
+    }
 }
 
 bool lexer_tknfile_eatchar(void)
@@ -140,9 +192,14 @@ bool lexer_tknfile_eatchar(void)
         return true;
     }
 
-    printf("%c", *curchar);
+    if(!stateprogress)
+    {
+        curchar = lexer_tknfile_skipwhitespace(curchar);
+        lexer_tknfile_findnexttkn();
+    }
 
     curchar++;
+    stateprogress--;
 
     return true;
 }
@@ -153,8 +210,9 @@ bool lexer_tknfile(srcfile_t* srcfile)
     assert(srcfile->path);
     assert(srcfile->rawtext);
 
-    state = -1;
+    state = LEXER_TOKENTYPE_INVALID;
     curchar = srcfile->rawtext;
+    stateprogress = 0;
 
     while(state != LEXER_TOKENTYPE_EOF)
     {
