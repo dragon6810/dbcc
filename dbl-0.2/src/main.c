@@ -48,7 +48,15 @@ int main(int argc, char** argv)
             cli_errornofile("source", ((char**)sourcefilenames.data)[i]);
             abort();
         }
+
+        lexer_tknfile(&((srcfile_t*)(sourcefiles.data))[i]);
     }
 
+    for(i=0; i<sourcefiles.size; i++)
+        srcfile_free(&((srcfile_t*)(sourcefiles.data))[i]);
+    
+    list_free(&sourcefiles);
+    list_free(&sourcefilenames);
+    
     return 0;
 }

@@ -36,6 +36,7 @@ endif
 all: mkdirs $(BIN_FILE)
 
 mkdirs:
+	@echo $(SRC_FILE)
 	mkdir -p $(BIN_DIR)
 	mkdir -p $(OBJ_DIR)
 

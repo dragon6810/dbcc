@@ -1,9 +1,11 @@
-#include <stdio.h>
-
 int main(int argc, char** argv)
 {
-    printf("Hello, World!\n");
-    printf("First Arg: \"%s\".\n", argv[0]);
+    int x;
+
+    x = 0;
+    x += 3;
+    x *= -1;
+    x--;
 
     return 0;
 }

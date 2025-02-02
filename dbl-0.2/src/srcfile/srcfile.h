@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include <frontend/lexer/lexer.h>
+
 /*
  * ================================
  *        TYPES DEFENITIONS
