@@ -3,12 +3,50 @@
 #include <string.h>
 
 #include <assert/assert.h>
+#include <list/list.h>
 #include <math/math.h>
 #include <srcfile/srcfile.h>
 
+#define LEXER_TKNFILE_COMMENTONELINER 1
+#define LEXER_TKNFILE_COMMENTCROSSLINE 2
+
+typedef struct lexer_tknfile_define_s lexer_tknfile_define_t;
+
+struct lexer_tknfile_define_s
+{
+    char *key, *val;
+};
+
 lexer_tokentype_e state = LEXER_TOKENTYPE_INVALID;
-char *curchar = NULL;
+char *curchar = NULL, *rawtext = NULL;
 unsigned long int stateprogress = 0;
+int incomment = 0; 
+char *filename = NULL;
+int line, col = 1;
+list_t defines;
+
+bool lexer_tknfile_ischarcancelled(char* str, char* c)
+{
+    int i;
+
+    bool canceled;
+
+    i = 0;
+    canceled = false;
+    do
+    {
+        c--;
+
+        if(*c != '\\' || i > 1)
+            break;
+    
+        canceled = !canceled;
+    
+        i++;
+    } while(c > str);
+    
+    return canceled;
+}
 
 bool lexer_tknfile_charallowedinidentifier(char c, bool first)
 {
@@ -63,6 +101,55 @@ int lexer_tknfile_isidentifier(char* str)
     return stringlen;
 }
 
+int lexer_tknfile_isstring(char* str)
+{
+    char *strend;
+
+    if(!str)
+        return 0;
+    if(str[0] != '"')
+        return 0;
+
+    strend = str;
+    do
+    {
+        strend++;
+    } while(*strend != '"' || lexer_tknfile_ischarcancelled(rawtext, strend));
+
+    return strend - str + 1;
+}
+
+int lexer_tknfile_ischaracter(char* str)
+{
+
+    char *strend;
+
+    if(!str)
+        return 0;
+    if(str[0] != '\'')
+        return 0;
+
+    strend = str;
+    do
+    {
+        if(*strend == 0)
+        {
+            printf("\x1B[31merror in %s: \x1B[0mchar constant not terminated at %d:%d.\n", filename, line, col); 
+            abort();
+        }
+
+        strend++;
+    } while(*strend != '\'' || lexer_tknfile_ischarcancelled(rawtext, strend));
+
+    if(((strend-str) != 4 && str[1] == '\'') || ((strend-str) != 3 && str[1] != '\''))
+    {
+        printf("\x1B[31merror in %s: \x1B[0mchar constant wrong length at %d:%d.\n", filename, line, col); 
+        abort();
+    }
+
+    return strend - str + 1;
+}
+
 int lexer_tknfile_isconstant(char* str)
 {
     char *strend;
@@ -106,29 +193,6 @@ int lexer_tknfile_isconstant(char* str)
     return stringlen;
 }
 
-bool lexer_tknfile_ischarcancelled(char* str, char* c)
-{
-    int i;
-
-    bool canceled;
-
-    i = 0;
-    canceled = false;
-    do
-    {
-        c--;
-
-        if(*c != '\\' || i > 1)
-            break;
-    
-        canceled = !canceled;
-    
-        i++;
-    } while(c > str);
-    
-    return canceled;
-}
-
 int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
 {
     char tknstr[LEXER_MAXHARDTOKENLEN];
@@ -139,7 +203,9 @@ int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
     if(type == LEXER_TOKENTYPE_IDENTIFIER)
         return lexer_tknfile_isidentifier(str);
     if(type == LEXER_TOKENTYPE_STRING)
-        return *str == '"';
+        return lexer_tknfile_isstring(str);
+    if(type == LEXER_TOKENTYPE_CHARCONSTANT)
+        return lexer_tknfile_ischaracter(str);
     if(type == LEXER_TOKENTYPE_CONSTANT)
         return lexer_tknfile_isconstant(str);
 
@@ -155,13 +221,129 @@ int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
 
 char* lexer_tknfile_skipwhitespace(char* str)
 {
-    if(!str || !*str)
+    if(!str)
         return str;
 
     while(*str <= 32 && *str)
+    {
+        col++;
+        if(*str == '\n')
+        {
+            line++;
+            col = 1;
+        }
         str++;
+    }
 
     return str;
+}
+
+void lexer_tknfile_replacesubstr(char* newstr, int replen)
+{
+    char *newrawtext;
+    unsigned long int newlen, charoffs;
+
+    assert(newstr);
+    assert(replen <= strlen(curchar));
+
+    newlen = strlen(rawtext) - replen + strlen(newstr);
+    newrawtext = malloc(newlen + 1);
+
+    charoffs = curchar - rawtext;
+    
+    memcpy(newrawtext, rawtext, charoffs);
+    newrawtext[charoffs] = 0;
+    strcat(newrawtext, newstr);
+    strcat(newrawtext, curchar + replen);
+
+    free(rawtext);
+    rawtext = newrawtext;
+    curchar = rawtext + charoffs;
+}
+
+bool lexer_tknfile_tryreplacedefine(int tokenlen)
+{
+    int i;
+
+    lexer_tknfile_define_t *definesdata;
+
+    definesdata = (lexer_tknfile_define_t*) defines.data;
+    for(i=defines.size-1; i>=0; i--)
+    {
+        if(strncmp(definesdata[i].key, curchar, tokenlen))
+            continue;
+
+        lexer_tknfile_replacesubstr(definesdata[i].val, tokenlen);
+
+        return true;
+    }
+
+    return false;
+}
+
+void lexer_tknfile_processdefine(void)
+{
+    char *start, *end;
+    lexer_tknfile_define_t define;
+
+    curchar = lexer_tknfile_skipwhitespace(curchar);
+
+    if(!*curchar)
+        return;
+
+    start = end = curchar;
+    do
+    {
+        end++;
+    } while(lexer_tknfile_charallowedinidentifier(*end, end == start+1));
+
+    define.key = malloc(end - start + 1);
+    memcpy(define.key, start, end - start);
+    define.key[end - start] = 0;
+
+    col += end - curchar;
+    curchar = end;
+    curchar = lexer_tknfile_skipwhitespace(curchar);
+
+    if(!*curchar)
+    {
+        free(define.key);
+        return;
+    }
+
+    start = end = curchar;
+    do
+    {
+        end++;
+    } while(*end != '\n' && !lexer_tknfile_ischarcancelled(rawtext, end));
+
+    define.val = malloc(end - start + 1);
+    memcpy(define.val, start, end - start);
+    define.val[end - start] = 0;
+
+    col += end - curchar;
+    curchar = end;
+    curchar = lexer_tknfile_skipwhitespace(curchar);
+
+    puts(define.key);
+    puts(define.val);
+
+    list_push(&defines, &define);
+}
+
+void lexer_tknfile_processdirective(void)
+{
+    if(*curchar != '#')
+        return;
+
+    curchar++;
+    col++;
+    if(!strncmp(curchar, "define", strlen("define")))
+    {
+        col += strlen("define");
+        curchar += strlen("define");
+        return lexer_tknfile_processdefine();
+    }
 }
 
 void lexer_tknfile_findnexttkn(void)
@@ -170,49 +352,164 @@ void lexer_tknfile_findnexttkn(void)
 
     int len;
     char str[LEXER_MAXHARDTOKENLEN];
+    int longestmatch, longestlen;
+    char *tokenval;
 
+    if(!*curchar)
+        return;
+
+    if(*curchar == '#')
+    {
+        lexer_tknfile_processdirective();
+        curchar = lexer_tknfile_skipwhitespace(curchar);
+        state = LEXER_TOKENTYPE_INVALID;
+        stateprogress = 0;
+        lexer_tknfile_findnexttkn();
+        return;
+    }
+
+    longestmatch = -1;
+    longestlen = 0;
     for(i=LEXER_TOKENTYPE_STARTOFENUM; i<=LEXER_TOKENTYPE_ENDOFENUM; i++)
     {
         if(!(len = lexer_tknfile_tknmatches(i, curchar)))
             continue;
-        
-        lexer_tkntypetostring(i, str);
-        stateprogress = len;
-        puts(str);
+        if(len <= longestlen)
+            continue;
 
+        longestmatch = i;
+        longestlen = len;
+    }
+
+    if(!longestlen)
+    {
+        printf("\x1B[31merror in %s: \x1B[0minvalid token start %c at %d:%d.\n", filename, *curchar, line, col); 
+        abort();
+    }
+
+    if(longestmatch == LEXER_TOKENTYPE_IDENTIFIER)
+    {
+        if(lexer_tknfile_tryreplacedefine(longestlen))
+        {
+            state = LEXER_TOKENTYPE_INVALID;
+            stateprogress = 0;
+            lexer_tknfile_findnexttkn();
+            return;
+        }
+    }
+
+    lexer_tkntypetostring(longestmatch, str);
+    state = longestmatch;
+    stateprogress = longestlen;
+    tokenval = malloc(longestlen + 1);
+    memcpy(tokenval, curchar, longestlen);
+    tokenval[longestlen] = 0;
+    printf("token \"%s\" (\"%s\") at %s:%d:%d.\n", tokenval, str, filename, line, col);
+    
+    free(tokenval);
+}
+
+void lexer_tknfile_updatecomment(void)
+{
+    if(!curchar || !*curchar)
+        return;
+
+    if(incomment == 1 && *curchar == '\n')
+    {
+        incomment = 0;
+        line++;
+        col = 1;
+        curchar++;
+        return;
+    }
+
+    if(strlen(curchar) < 2)
+        return;
+
+    if(incomment == 2 && !strncmp("*/", curchar, 2))
+    {
+        incomment = 0;
+        curchar += 2;
+        return;
+    }
+
+    if(!strncmp("//", curchar, 2))
+    {
+        state = LEXER_TOKENTYPE_INVALID;
+        stateprogress = 0;
+        incomment = 1;
+        curchar += 2;
+        return;
+    }
+
+    if(!strncmp("/*", curchar, 2))
+    {
+        state = LEXER_TOKENTYPE_INVALID;
+        stateprogress = 0;
+        incomment = 2;
+        curchar += 2;
         return;
     }
 }
 
 bool lexer_tknfile_eatchar(void)
 {
+    if(!curchar || !curchar[0])
+    {
+        state = LEXER_TOKENTYPE_EOF;
+        return true;
+    }
+
+    if(!incomment)
+        curchar = lexer_tknfile_skipwhitespace(curchar);
+    lexer_tknfile_updatecomment();
+    if(!incomment)
+        curchar = lexer_tknfile_skipwhitespace(curchar);
+
+    if(!stateprogress && !incomment)
+    {
+        if(!*curchar)
+        {
+            state = LEXER_TOKENTYPE_EOF;
+            return true;
+        }
+        lexer_tknfile_findnexttkn();
+    }
+
     if(!curchar[0])
     {
         state = LEXER_TOKENTYPE_EOF;
         return true;
     }
 
-    if(!stateprogress)
+    col++;
+    if(*curchar == '\n')
     {
-        curchar = lexer_tknfile_skipwhitespace(curchar);
-        lexer_tknfile_findnexttkn();
+        col = 1;
+        line++;
     }
-
     curchar++;
-    stateprogress--;
+    if(!incomment)
+        stateprogress--;
 
     return true;
 }
 
 bool lexer_tknfile(srcfile_t* srcfile)
 {
+    int i;
+
     assert(srcfile);
     assert(srcfile->path);
     assert(srcfile->rawtext);
 
     state = LEXER_TOKENTYPE_INVALID;
-    curchar = srcfile->rawtext;
+    rawtext = curchar = strdup(srcfile->rawtext);
+    incomment = 0;
     stateprogress = 0;
+    filename = srcfile->path;
+    line = col = 1; 
+    list_initialize(&defines, sizeof(lexer_tknfile_define_t));
 
     while(state != LEXER_TOKENTYPE_EOF)
     {
@@ -220,7 +517,14 @@ bool lexer_tknfile(srcfile_t* srcfile)
             return false;
     }
 
-    puts("");
+    for(i=0; i<defines.size; i++)
+    {
+        free(((lexer_tknfile_define_t*)defines.data)[i].key);
+        free(((lexer_tknfile_define_t*)defines.data)[i].val); 
+    }
+    list_free(&defines);
+
+    free(rawtext);
 
     return true;
 }
