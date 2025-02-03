@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include <frontend/lexer/lexer.h>
+#include <list/list.h>
 
 /*
  * ================================
@@ -16,6 +17,7 @@ typedef struct srcfile_s srcfile_t;
 struct srcfile_s
 {
     char *path, *rawtext;
+    list_t tokens;
 };
 
 bool srcfile_load(char* path, srcfile_t* srcfile);

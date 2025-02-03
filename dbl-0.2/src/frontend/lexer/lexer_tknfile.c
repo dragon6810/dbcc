@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <assert/assert.h>
+#include <cli/cli.h>
 #include <list/list.h>
 #include <math/math.h>
 #include <srcfile/srcfile.h>
@@ -24,6 +25,7 @@ int incomment = 0;
 char *filename = NULL;
 int line, col = 1;
 list_t defines;
+list_t tokens;
 
 bool lexer_tknfile_ischarcancelled(char* str, char* c)
 {
@@ -354,6 +356,7 @@ void lexer_tknfile_findnexttkn(void)
     char str[LEXER_MAXHARDTOKENLEN];
     int longestmatch, longestlen;
     char *tokenval;
+    lexer_token_t newtkn;
 
     if(!*curchar)
         return;
@@ -404,9 +407,17 @@ void lexer_tknfile_findnexttkn(void)
     tokenval = malloc(longestlen + 1);
     memcpy(tokenval, curchar, longestlen);
     tokenval[longestlen] = 0;
-    printf("token \"%s\" (\"%s\") at %s:%d:%d.\n", tokenval, str, filename, line, col);
-    
-    free(tokenval);
+
+    newtkn.line = line;
+    newtkn.col = col;
+    newtkn.file = filename;
+    newtkn.type = longestmatch;
+    newtkn.val = tokenval;
+
+    list_push(&tokens, &newtkn);
+
+    if(cli_verbose)
+        printf("token \"%s\" (\"%s\") at %s:%d:%d.\n", tokenval, str, filename, line, col);
 }
 
 void lexer_tknfile_updatecomment(void)
@@ -414,7 +425,7 @@ void lexer_tknfile_updatecomment(void)
     if(!curchar || !*curchar)
         return;
 
-    if(incomment == 1 && *curchar == '\n')
+    if(incomment == LEXER_TKNFILE_COMMENTONELINER && *curchar == '\n')
     {
         incomment = 0;
         line++;
@@ -426,7 +437,7 @@ void lexer_tknfile_updatecomment(void)
     if(strlen(curchar) < 2)
         return;
 
-    if(incomment == 2 && !strncmp("*/", curchar, 2))
+    if(incomment == LEXER_TKNFILE_COMMENTCROSSLINE && !strncmp("*/", curchar, 2))
     {
         incomment = 0;
         curchar += 2;
@@ -437,7 +448,7 @@ void lexer_tknfile_updatecomment(void)
     {
         state = LEXER_TOKENTYPE_INVALID;
         stateprogress = 0;
-        incomment = 1;
+        incomment = LEXER_TKNFILE_COMMENTONELINER;
         curchar += 2;
         return;
     }
@@ -446,7 +457,7 @@ void lexer_tknfile_updatecomment(void)
     {
         state = LEXER_TOKENTYPE_INVALID;
         stateprogress = 0;
-        incomment = 2;
+        incomment = LEXER_TKNFILE_COMMENTCROSSLINE;
         curchar += 2;
         return;
     }
@@ -510,12 +521,15 @@ bool lexer_tknfile(srcfile_t* srcfile)
     filename = srcfile->path;
     line = col = 1; 
     list_initialize(&defines, sizeof(lexer_tknfile_define_t));
+    list_initialize(&tokens, sizeof(lexer_token_t));
 
     while(state != LEXER_TOKENTYPE_EOF)
     {
         if(!lexer_tknfile_eatchar())
             return false;
     }
+
+    srcfile->tokens = tokens;
 
     for(i=0; i<defines.size; i++)
     {
