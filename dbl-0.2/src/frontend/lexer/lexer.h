@@ -128,6 +128,7 @@ typedef enum
 
     // Dynamics
     LEXER_TOKENTYPE_STRING,       // "[string]"
+    LEXER_TOKENTYPE_CHARCONSTANT, // '[character]'
     LEXER_TOKENTYPE_IDENTIFIER,   // [identifier]
     LEXER_TOKENTYPE_CONSTANT,     // [constant]
 } lexer_tokentype_e;

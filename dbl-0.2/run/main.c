@@ -22,6 +22,7 @@ int main(int argc, char** argv)
     */
 
     x += MY_DEFINE;
+    c = '\n';
 
     return 0;
 }

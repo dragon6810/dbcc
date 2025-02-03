@@ -25,6 +25,29 @@ char *filename = NULL;
 int line, col = 1;
 list_t defines;
 
+bool lexer_tknfile_ischarcancelled(char* str, char* c)
+{
+    int i;
+
+    bool canceled;
+
+    i = 0;
+    canceled = false;
+    do
+    {
+        c--;
+
+        if(*c != '\\' || i > 1)
+            break;
+    
+        canceled = !canceled;
+    
+        i++;
+    } while(c > str);
+    
+    return canceled;
+}
+
 bool lexer_tknfile_charallowedinidentifier(char c, bool first)
 {
     if(MATH_INRANGE(c, 'a', 'z'))
@@ -78,6 +101,55 @@ int lexer_tknfile_isidentifier(char* str)
     return stringlen;
 }
 
+int lexer_tknfile_isstring(char* str)
+{
+    char *strend;
+
+    if(!str)
+        return 0;
+    if(str[0] != '"')
+        return 0;
+
+    strend = str;
+    do
+    {
+        strend++;
+    } while(*strend != '"' || lexer_tknfile_ischarcancelled(rawtext, strend));
+
+    return strend - str + 1;
+}
+
+int lexer_tknfile_ischaracter(char* str)
+{
+
+    char *strend;
+
+    if(!str)
+        return 0;
+    if(str[0] != '\'')
+        return 0;
+
+    strend = str;
+    do
+    {
+        if(*strend == 0)
+        {
+            printf("\x1B[31merror in %s: \x1B[0mchar constant not terminated at %d:%d.\n", filename, line, col); 
+            abort();
+        }
+
+        strend++;
+    } while(*strend != '\'' || lexer_tknfile_ischarcancelled(rawtext, strend));
+
+    if(((strend-str) != 4 && str[1] == '\'') || ((strend-str) != 3 && str[1] != '\''))
+    {
+        printf("\x1B[31merror in %s: \x1B[0mchar constant wrong length at %d:%d.\n", filename, line, col); 
+        abort();
+    }
+
+    return strend - str + 1;
+}
+
 int lexer_tknfile_isconstant(char* str)
 {
     char *strend;
@@ -121,29 +193,6 @@ int lexer_tknfile_isconstant(char* str)
     return stringlen;
 }
 
-bool lexer_tknfile_ischarcancelled(char* str, char* c)
-{
-    int i;
-
-    bool canceled;
-
-    i = 0;
-    canceled = false;
-    do
-    {
-        c--;
-
-        if(*c != '\\' || i > 1)
-            break;
-    
-        canceled = !canceled;
-    
-        i++;
-    } while(c > str);
-    
-    return canceled;
-}
-
 int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
 {
     char tknstr[LEXER_MAXHARDTOKENLEN];
@@ -154,7 +203,9 @@ int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
     if(type == LEXER_TOKENTYPE_IDENTIFIER)
         return lexer_tknfile_isidentifier(str);
     if(type == LEXER_TOKENTYPE_STRING)
-        return *str == '"';
+        return lexer_tknfile_isstring(str);
+    if(type == LEXER_TOKENTYPE_CHARCONSTANT)
+        return lexer_tknfile_ischaracter(str);
     if(type == LEXER_TOKENTYPE_CONSTANT)
         return lexer_tknfile_isconstant(str);
 

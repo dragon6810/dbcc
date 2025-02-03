@@ -261,6 +261,9 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_STRING:
         strcpy(str, "string");
         break;
+    case LEXER_TOKENTYPE_CHARCONSTANT:
+        strcpy(str, "character");
+        break;
     case LEXER_TOKENTYPE_IDENTIFIER:
         strcpy(str, "identifier");
         break;
