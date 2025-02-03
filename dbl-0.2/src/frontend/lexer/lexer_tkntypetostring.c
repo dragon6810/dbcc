@@ -2,8 +2,6 @@
 
 #include <string.h>
 
-#pragma GCC diagnostic ignored "-Wswitch"
-
 // I hate this. If i had a hashmap type I'd use that
 int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
 {

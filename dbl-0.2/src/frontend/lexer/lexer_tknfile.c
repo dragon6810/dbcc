@@ -3,18 +3,27 @@
 #include <string.h>
 
 #include <assert/assert.h>
+#include <list/list.h>
 #include <math/math.h>
 #include <srcfile/srcfile.h>
 
 #define LEXER_TKNFILE_COMMENTONELINER 1
 #define LEXER_TKNFILE_COMMENTCROSSLINE 2
 
+typedef struct lexer_tknfile_define_s lexer_tknfile_define_t;
+
+struct lexer_tknfile_define_s
+{
+    char *key, *val;
+};
+
 lexer_tokentype_e state = LEXER_TOKENTYPE_INVALID;
-char *curchar = NULL;
+char *curchar = NULL, *rawtext = NULL;
 unsigned long int stateprogress = 0;
 int incomment = 0; 
 char *filename = NULL;
 int line, col = 1;
+list_t defines;
 
 bool lexer_tknfile_charallowedinidentifier(char c, bool first)
 {
@@ -178,6 +187,114 @@ char* lexer_tknfile_skipwhitespace(char* str)
     return str;
 }
 
+void lexer_tknfile_replacesubstr(char* newstr, int replen)
+{
+    char *newrawtext;
+    unsigned long int newlen, charoffs;
+
+    assert(newstr);
+    assert(replen <= strlen(curchar));
+
+    newlen = strlen(rawtext) - replen + strlen(newstr);
+    newrawtext = malloc(newlen + 1);
+
+    charoffs = curchar - rawtext;
+    
+    memcpy(newrawtext, rawtext, charoffs);
+    newrawtext[charoffs] = 0;
+    strcat(newrawtext, newstr);
+    strcat(newrawtext, curchar + replen);
+
+    free(rawtext);
+    rawtext = newrawtext;
+    curchar = rawtext + charoffs;
+}
+
+bool lexer_tknfile_tryreplacedefine(int tokenlen)
+{
+    int i;
+
+    lexer_tknfile_define_t *definesdata;
+
+    definesdata = (lexer_tknfile_define_t*) defines.data;
+    for(i=defines.size-1; i>=0; i--)
+    {
+        if(strncmp(definesdata[i].key, curchar, tokenlen))
+            continue;
+
+        lexer_tknfile_replacesubstr(definesdata[i].val, tokenlen);
+
+        return true;
+    }
+
+    return false;
+}
+
+void lexer_tknfile_processdefine(void)
+{
+    char *start, *end;
+    lexer_tknfile_define_t define;
+
+    curchar = lexer_tknfile_skipwhitespace(curchar);
+
+    if(!*curchar)
+        return;
+
+    start = end = curchar;
+    do
+    {
+        end++;
+    } while(lexer_tknfile_charallowedinidentifier(*end, end == start+1));
+
+    define.key = malloc(end - start + 1);
+    memcpy(define.key, start, end - start);
+    define.key[end - start] = 0;
+
+    col += end - curchar;
+    curchar = end;
+    curchar = lexer_tknfile_skipwhitespace(curchar);
+
+    if(!*curchar)
+    {
+        free(define.key);
+        return;
+    }
+
+    start = end = curchar;
+    do
+    {
+        end++;
+    } while(*end != '\n' && !lexer_tknfile_ischarcancelled(rawtext, end));
+
+    define.val = malloc(end - start + 1);
+    memcpy(define.val, start, end - start);
+    define.val[end - start] = 0;
+
+    col += end - curchar;
+    curchar = end;
+    curchar = lexer_tknfile_skipwhitespace(curchar);
+
+    puts(define.key);
+    puts(define.val);
+
+    list_push(&defines, &define);
+}
+
+void lexer_tknfile_processdirective(void)
+{
+    if(*curchar != '#')
+        return;
+
+    curchar++;
+    col++;
+    if(!strncmp(curchar, "define", strlen("define")))
+    {
+        col += strlen("define");
+        curchar += strlen("define");
+        return lexer_tknfile_processdefine();
+    }
+}
+
 void lexer_tknfile_findnexttkn(void)
 {
     int i;
@@ -186,6 +303,19 @@ void lexer_tknfile_findnexttkn(void)
     char str[LEXER_MAXHARDTOKENLEN];
     int longestmatch, longestlen;
     char *tokenval;
+
+    if(!*curchar)
+        return;
+
+    if(*curchar == '#')
+    {
+        lexer_tknfile_processdirective();
+        curchar = lexer_tknfile_skipwhitespace(curchar);
+        state = LEXER_TOKENTYPE_INVALID;
+        stateprogress = 0;
+        lexer_tknfile_findnexttkn();
+        return;
+    }
 
     longestmatch = -1;
     longestlen = 0;
@@ -204,6 +334,17 @@ void lexer_tknfile_findnexttkn(void)
     {
         printf("\x1B[31merror in %s: \x1B[0minvalid token start %c at %d:%d.\n", filename, *curchar, line, col); 
         abort();
+    }
+
+    if(longestmatch == LEXER_TOKENTYPE_IDENTIFIER)
+    {
+        if(lexer_tknfile_tryreplacedefine(longestlen))
+        {
+            state = LEXER_TOKENTYPE_INVALID;
+            stateprogress = 0;
+            lexer_tknfile_findnexttkn();
+            return;
+        }
     }
 
     lexer_tkntypetostring(longestmatch, str);
@@ -305,22 +446,34 @@ bool lexer_tknfile_eatchar(void)
 
 bool lexer_tknfile(srcfile_t* srcfile)
 {
+    int i;
+
     assert(srcfile);
     assert(srcfile->path);
     assert(srcfile->rawtext);
 
     state = LEXER_TOKENTYPE_INVALID;
-    curchar = srcfile->rawtext;
+    rawtext = curchar = strdup(srcfile->rawtext);
     incomment = 0;
     stateprogress = 0;
     filename = srcfile->path;
     line = col = 1; 
+    list_initialize(&defines, sizeof(lexer_tknfile_define_t));
 
     while(state != LEXER_TOKENTYPE_EOF)
     {
         if(!lexer_tknfile_eatchar())
             return false;
     }
+
+    for(i=0; i<defines.size; i++)
+    {
+        free(((lexer_tknfile_define_t*)defines.data)[i].key);
+        free(((lexer_tknfile_define_t*)defines.data)[i].val); 
+    }
+    list_free(&defines);
+
+    free(rawtext);
 
     return true;
 }

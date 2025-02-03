@@ -136,7 +136,8 @@ struct lexer_token_s
 {
     char *val;
     lexer_tokentype_e type;
-    unsigned long int pos;
+    
+    char *file;
     unsigned long int line, col;
 };
 

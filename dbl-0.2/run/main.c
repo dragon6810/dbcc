@@ -1,7 +1,10 @@
+#define MY_DEFINE (6 + 13)
+
 int main(int argc, char** argv)
 {
     int x;
     char c;
+    char *str = "my string is cool.";
 
     // heres a one-line comment
 
@@ -18,7 +21,7 @@ int main(int argc, char** argv)
      * cool
     */
 
-    ^
+    x += MY_DEFINE;
 
     return 0;
 }
