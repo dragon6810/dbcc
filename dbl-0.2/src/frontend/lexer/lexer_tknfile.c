@@ -327,9 +327,6 @@ void lexer_tknfile_processdefine(void)
     curchar = end;
     curchar = lexer_tknfile_skipwhitespace(curchar);
 
-    puts(define.key);
-    puts(define.val);
-
     list_push(&defines, &define);
 }
 
