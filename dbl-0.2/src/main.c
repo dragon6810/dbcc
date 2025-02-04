@@ -12,6 +12,8 @@ int main(int argc, char** argv)
     list_t sourcefilenames;
     list_t sourcefiles;
 
+    cli_initialize();
+
     if(argc == 1)
     {
         cli_printusage();

@@ -1,3 +1,6 @@
+#include "incfile.h"
+#include "otherincfile.h"
+
 #define MY_DEFINE (6 + 13)
 
 int main(int argc, char** argv)

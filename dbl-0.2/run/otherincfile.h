@@ -1,0 +1,4 @@
+
+
+
+int nextfun(double x);
