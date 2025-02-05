@@ -36,7 +36,7 @@ list_t defines;
 list_t tokens;
 list_t lexer_tknfile_incstack;
 
-void lexer_tknfile_advcurchar(void)
+static void lexer_tknfile_advcurchar(void)
 {
     lexer_tknfile_incstackel_t *inctop;
 
@@ -55,7 +55,7 @@ void lexer_tknfile_advcurchar(void)
         list_pop(&lexer_tknfile_incstack, NULL);
 }
 
-bool lexer_tknfile_ischarcancelled(char* str, char* c)
+static bool lexer_tknfile_ischarcancelled(char* str, char* c)
 {
     int i;
 
@@ -78,7 +78,7 @@ bool lexer_tknfile_ischarcancelled(char* str, char* c)
     return canceled;
 }
 
-bool lexer_tknfile_charallowedinidentifier(char c, bool first)
+static bool lexer_tknfile_charallowedinidentifier(char c, bool first)
 {
     if(MATH_INRANGE(c, 'a', 'z'))
         return true;
@@ -95,7 +95,7 @@ bool lexer_tknfile_charallowedinidentifier(char c, bool first)
     return false;
 }
 
-int lexer_tknfile_isidentifier(char* str)
+static int lexer_tknfile_isidentifier(char* str)
 {
     int i;
 
@@ -131,7 +131,7 @@ int lexer_tknfile_isidentifier(char* str)
     return stringlen;
 }
 
-int lexer_tknfile_isstring(char* str)
+static int lexer_tknfile_isstring(char* str)
 {
     char *strend;
 
@@ -148,7 +148,7 @@ int lexer_tknfile_isstring(char* str)
     return strend - str + 1;
 }
 
-int lexer_tknfile_ischaracter(char* str)
+static int lexer_tknfile_ischaracter(char* str)
 {
     lexer_tknfile_incstackel_t *inctop;
     char *strend;
@@ -181,7 +181,7 @@ int lexer_tknfile_ischaracter(char* str)
     return strend - str + 1;
 }
 
-int lexer_tknfile_isconstant(char* str)
+static int lexer_tknfile_isconstant(char* str)
 {
     char *strend;
     unsigned long int stringlen;
@@ -224,7 +224,7 @@ int lexer_tknfile_isconstant(char* str)
     return stringlen;
 }
 
-int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
+static int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
 {
     char tknstr[LEXER_MAXHARDTOKENLEN];
 
@@ -250,7 +250,7 @@ int lexer_tknfile_tknmatches(lexer_tokentype_e type, char* str)
     return strlen(tknstr);
 }
 
-void lexer_tknfile_skipwhitespace()
+static void lexer_tknfile_skipwhitespace()
 {
     if(!curchar)
         return;
@@ -259,7 +259,7 @@ void lexer_tknfile_skipwhitespace()
         lexer_tknfile_advcurchar();
 }
 
-void lexer_tknfile_replacesubstr(char* newstr, int replen)
+static void lexer_tknfile_replacesubstr(char* newstr, int replen)
 {
     char *newrawtext;
     unsigned long int newlen, charoffs;
@@ -282,7 +282,7 @@ void lexer_tknfile_replacesubstr(char* newstr, int replen)
     curchar = rawtext + charoffs;
 }
 
-bool lexer_tknfile_tryreplacedefine(int tokenlen)
+static bool lexer_tknfile_tryreplacedefine(int tokenlen)
 {
     int i;
 
@@ -302,16 +302,20 @@ bool lexer_tknfile_tryreplacedefine(int tokenlen)
     return false;
 }
 
-void lexer_tknfile_processinclude(void)
+static void lexer_tknfile_processinclude(void)
 {
+    int i;
+    char *curincpath;
+
     lexer_tknfile_incstackel_t *inctop;
     FILE *ptr;
     bool local;
     char *start, *end, *stateend;
-    char *path, *dir, *realpath;
+    char path[PATH_MAX], dir[PATH_MAX], realpath[PATH_MAX];
     char *filecontents;
     unsigned long int contentslen;
     lexer_tknfile_incstackel_t newtop;
+    char curfile[PATH_MAX];
 
     inctop = &((lexer_tknfile_incstackel_t*)lexer_tknfile_incstack.data)[lexer_tknfile_incstack.size - 1];
 
@@ -330,21 +334,30 @@ void lexer_tknfile_processinclude(void)
         start = end = curchar + 1;
         while(*end != '"' && *end && *end != '\n')
             end++;
+
+        if(*end != '"')
+        {
+            fprintf(stderr, "\x1B[31merror in %s: \x1B[0mexpected \" to terminate include path %lu:%lu.\n", inctop->filename, inctop->line, inctop->column); 
+            abort();
+        }
     }
     else
     {
+        local = false;
         start = end = curchar + 1;
-    }
 
-    if(*end != '"')
-    {
-        fprintf(stderr, "\x1B[31merror in %s: \x1B[0mexpected \" to terminate include path %lu:%lu.\n", inctop->filename, inctop->line, inctop->column); 
-        abort();
+        while(*end != '>' && *end && *end != '\n')
+            end++;
+
+        if(*end != '>')
+        {
+            fprintf(stderr, "\x1B[31merror in %s: \x1B[0mexpected > to terminate include path %lu:%lu.\n", inctop->filename, inctop->line, inctop->column); 
+            abort();
+        }
     }
 
     stateend = end;
 
-    path = malloc(end - start + 1);
     memcpy(path, start, end - start);
     path[end - start] = 0;
 
@@ -352,32 +365,43 @@ void lexer_tknfile_processinclude(void)
     {
         start = inctop->filename;
         end = inctop->filename + strlen(inctop->filename);
-        do
+        while(*end != '/' && end > start)
             end--;
-        while(*end != '/' && end > start);
 
         if(end - start == 0)
         {
-            dir = NULL;
-            realpath = strdup(path);
+            dir[0] = 0;
+            strcpy(realpath, path);
         }
         else
         {
-            dir = malloc(end - start + 1);
             memcpy(dir, start, end - start);
             dir[end - start] = 0;
 
-            realpath = malloc(strlen(dir) + strlen(path) + 1);
             strcpy(realpath, dir);
             strcat(realpath, path);
         }
     }
     else
     {
-        dir = 0;
+        realpath[0] = dir[0] = 0;
+
+        for(i=0; i<cli_includedirs.size; i++)
+        {
+            curincpath = ((char**)cli_includedirs.data)[i];
+            strcpy(curfile, curincpath);
+            if(curfile[0] && curfile[strlen(curfile) - 1] != '/')
+                strcat(curfile, "/");
+
+            strcat(curfile, path);
+            if(access(curfile, F_OK))
+                continue;
+
+            strcpy(realpath, curfile);
+        }
     }
 
-    if(access(realpath, F_OK))
+    if(!realpath[0] || access(realpath, F_OK))
     {
         fprintf(stderr, "\x1B[31merror in %s: \x1B[0minclude file %s not found, included at %lu:%lu.\n", inctop->filename, path, inctop->line, inctop->column); 
         abort();
@@ -390,8 +414,8 @@ void lexer_tknfile_processinclude(void)
     fread(filecontents, 1, contentslen, ptr);
     filecontents[contentslen] = 0;
 
-    inctop->column += (stateend + 1) - curchar;
-    curchar = stateend + 1;
+    while(curchar > rawtext && *curchar != '#')
+        curchar--;
 
     newtop.line = newtop.column = 1;
     strcpy(newtop.filename, realpath);
@@ -403,19 +427,13 @@ void lexer_tknfile_processinclude(void)
         inctop->end += contentslen;
 
     list_push(&lexer_tknfile_incstack, &newtop);
-    lexer_tknfile_replacesubstr(filecontents, 0);
+    lexer_tknfile_replacesubstr(filecontents, stateend + 1 - curchar);
 
-    free(path);
-    if(dir)
-        free(dir);
-    free(realpath);
     free(filecontents);
     fclose(ptr);
-
-    lexer_tknfile_skipwhitespace();
 }
 
-void lexer_tknfile_processdefine(void)
+static void lexer_tknfile_processdefine(void)
 {
     lexer_tknfile_incstackel_t *inctop;
     char *start, *end;
@@ -463,31 +481,41 @@ void lexer_tknfile_processdefine(void)
     list_push(&defines, &define);
 }
 
-void lexer_tknfile_processdirective(void)
+static bool lexer_tknfile_processdirective(void)
 {
     lexer_tknfile_incstackel_t *inctop;
 
     inctop = &((lexer_tknfile_incstackel_t*)lexer_tknfile_incstack.data)[lexer_tknfile_incstack.size - 1];
 
     if(*curchar != '#')
-        return;
+        return false;
 
     lexer_tknfile_advcurchar();
     if(!strncmp(curchar, "define", strlen("define")))
     {
         inctop->column += strlen("define");
         curchar += strlen("define");
-        return lexer_tknfile_processdefine();
+        lexer_tknfile_processdefine();
+        return true;
     }
     if(!strncmp(curchar, "include", strlen("include")))
     {
         inctop->column += strlen("include");
         curchar += strlen("include");
-        return lexer_tknfile_processinclude();
+        lexer_tknfile_processinclude();
+        return false;
     }
+
+    puts(curchar);
+    
+    fprintf(stderr, "\x1B[31merror in %s: \x1B[0munknown preprocessor directive at %lu:%lu.\n", inctop->filename, inctop->line, inctop->column); 
+    abort();
+
+    return false;
 }
 
-void lexer_tknfile_findnexttkn(void)
+// Returns whether you should consume a char right after
+static bool lexer_tknfile_findnexttkn(void)
 {
     int i;
 
@@ -497,20 +525,25 @@ void lexer_tknfile_findnexttkn(void)
     int longestmatch, longestlen;
     char *tokenval;
     lexer_token_t newtkn;
+    bool again;
 
     inctop = &((lexer_tknfile_incstackel_t*)lexer_tknfile_incstack.data)[lexer_tknfile_incstack.size - 1];
 
     if(!*curchar)
-        return;
+        return true;
 
     if(*curchar == '#')
     {
-        lexer_tknfile_processdirective();
+        again = lexer_tknfile_processdirective();
         lexer_tknfile_skipwhitespace();
         state = LEXER_TOKENTYPE_INVALID;
         stateprogress = 0;
-        lexer_tknfile_findnexttkn();
-        return;
+        if(again)
+            lexer_tknfile_findnexttkn();
+        else
+            return false;
+
+        return true;
     }
 
     longestmatch = -1;
@@ -539,7 +572,7 @@ void lexer_tknfile_findnexttkn(void)
             state = LEXER_TOKENTYPE_INVALID;
             stateprogress = 0;
             lexer_tknfile_findnexttkn();
-            return;
+            return true;
         }
     }
 
@@ -560,9 +593,11 @@ void lexer_tknfile_findnexttkn(void)
 
     if(cli_verbose)
         printf("token \"%s\" (\"%s\") at %s:%lu:%lu.\n", tokenval, str, inctop->filename, inctop->line, inctop->column);
+
+    return true;
 }
 
-void lexer_tknfile_updatecomment(void)
+static void lexer_tknfile_updatecomment(void)
 {
     if(!curchar || !*curchar)
         return;
@@ -580,16 +615,23 @@ void lexer_tknfile_updatecomment(void)
     if(incomment == LEXER_TKNFILE_COMMENTCROSSLINE && !strncmp("*/", curchar, 2))
     {
         incomment = 0;
-        curchar += 2;
+        lexer_tknfile_advcurchar();
+        lexer_tknfile_advcurchar();
+        lexer_tknfile_skipwhitespace();
+        lexer_tknfile_updatecomment();
         return;
     }
+
+    if(incomment)
+        return;
 
     if(!strncmp("//", curchar, 2))
     {
         state = LEXER_TOKENTYPE_INVALID;
         stateprogress = 0;
         incomment = LEXER_TKNFILE_COMMENTONELINER;
-        curchar += 2;
+        lexer_tknfile_advcurchar();
+        lexer_tknfile_advcurchar();
         return;
     }
 
@@ -598,13 +640,16 @@ void lexer_tknfile_updatecomment(void)
         state = LEXER_TOKENTYPE_INVALID;
         stateprogress = 0;
         incomment = LEXER_TKNFILE_COMMENTCROSSLINE;
-        curchar += 2;
+        lexer_tknfile_advcurchar();
+        lexer_tknfile_advcurchar();
         return;
     }
 }
 
-bool lexer_tknfile_eatchar(void)
+static bool lexer_tknfile_eatchar(void)
 {
+    bool eatc;
+
     if(!curchar || !curchar[0])
     {
         state = LEXER_TOKENTYPE_EOF;
@@ -617,6 +662,7 @@ bool lexer_tknfile_eatchar(void)
     if(!incomment)
         lexer_tknfile_skipwhitespace();
 
+    eatc = true;
     if(!stateprogress && !incomment)
     {
         if(!*curchar)
@@ -624,8 +670,11 @@ bool lexer_tknfile_eatchar(void)
             state = LEXER_TOKENTYPE_EOF;
             return true;
         }
-        lexer_tknfile_findnexttkn();
+        eatc = lexer_tknfile_findnexttkn();
     }
+
+    if(!eatc)
+        return true;
 
     if(!curchar[0])
     {
@@ -671,6 +720,8 @@ bool lexer_tknfile(srcfile_t* srcfile)
     }
 
     srcfile->tokens = tokens;
+
+    //puts(rawtext);
 
     for(i=0; i<defines.size; i++)
     {
