@@ -40,7 +40,7 @@ static void lexer_tknfile_advcurchar(void)
 {
     lexer_tknfile_incstackel_t *inctop;
 
-    inctop = &((lexer_tknfile_incstackel_t*)lexer_tknfile_incstack.data)[lexer_tknfile_incstack.size - 1];
+    inctop = &LIST_FETCH(lexer_tknfile_incstack, lexer_tknfile_incstackel_t, lexer_tknfile_incstack.size - 1);
 
     inctop->column++;
     if(*curchar == '\n')
@@ -153,7 +153,7 @@ static int lexer_tknfile_ischaracter(char* str)
     lexer_tknfile_incstackel_t *inctop;
     char *strend;
 
-    inctop = &((lexer_tknfile_incstackel_t*)lexer_tknfile_incstack.data)[lexer_tknfile_incstack.size - 1];
+    inctop = &LIST_FETCH(lexer_tknfile_incstack, lexer_tknfile_incstackel_t, lexer_tknfile_incstack.size - 1);
 
     if(!str)
         return 0;
@@ -317,7 +317,7 @@ static void lexer_tknfile_processinclude(void)
     lexer_tknfile_incstackel_t newtop;
     char curfile[PATH_MAX];
 
-    inctop = &((lexer_tknfile_incstackel_t*)lexer_tknfile_incstack.data)[lexer_tknfile_incstack.size - 1];
+    inctop = &LIST_FETCH(lexer_tknfile_incstack, lexer_tknfile_incstackel_t, lexer_tknfile_incstack.size - 1);
 
     lexer_tknfile_skipwhitespace();
 
@@ -388,7 +388,7 @@ static void lexer_tknfile_processinclude(void)
 
         for(i=0; i<cli_includedirs.size; i++)
         {
-            curincpath = ((char**)cli_includedirs.data)[i];
+            curincpath = LIST_FETCH(cli_includedirs, char*, i);
             strcpy(curfile, curincpath);
             if(curfile[0] && curfile[strlen(curfile) - 1] != '/')
                 strcat(curfile, "/");
@@ -439,7 +439,7 @@ static void lexer_tknfile_processdefine(void)
     char *start, *end;
     lexer_tknfile_define_t define;
 
-    inctop = &((lexer_tknfile_incstackel_t*)lexer_tknfile_incstack.data)[lexer_tknfile_incstack.size - 1];
+    inctop = &LIST_FETCH(lexer_tknfile_incstack, lexer_tknfile_incstackel_t, lexer_tknfile_incstack.size - 1);
 
     lexer_tknfile_skipwhitespace();
 
@@ -485,7 +485,7 @@ static bool lexer_tknfile_processdirective(void)
 {
     lexer_tknfile_incstackel_t *inctop;
 
-    inctop = &((lexer_tknfile_incstackel_t*)lexer_tknfile_incstack.data)[lexer_tknfile_incstack.size - 1];
+    inctop = &LIST_FETCH(lexer_tknfile_incstack, lexer_tknfile_incstackel_t, lexer_tknfile_incstack.size - 1);
 
     if(*curchar != '#')
         return false;
@@ -528,7 +528,7 @@ static bool lexer_tknfile_findnexttkn(void)
     lexer_token_t newtkn;
     bool again;
 
-    inctop = &((lexer_tknfile_incstackel_t*)lexer_tknfile_incstack.data)[lexer_tknfile_incstack.size - 1];
+    inctop = &LIST_FETCH(lexer_tknfile_incstack, lexer_tknfile_incstackel_t, lexer_tknfile_incstack.size - 1);
 
     if(!*curchar)
         return true;
@@ -726,8 +726,8 @@ bool lexer_tknfile(srcfile_t* srcfile)
 
     for(i=0; i<defines.size; i++)
     {
-        free(((lexer_tknfile_define_t*)defines.data)[i].key);
-        free(((lexer_tknfile_define_t*)defines.data)[i].val); 
+        free(LIST_FETCH(defines, lexer_tknfile_define_t, i).key);
+        free(LIST_FETCH(defines, lexer_tknfile_define_t, i).val);
     }
     list_free(&defines);
 

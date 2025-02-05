@@ -38,24 +38,24 @@ int main(int argc, char** argv)
 
         printf("source files:\n");
         for(i=0; i<sourcefilenames.size; i++)
-            printf("    %s\n", ((char**)sourcefilenames.data)[i]);
+            printf("    %s\n", LIST_FETCH(sourcefilenames, char*, i));
     }
 
     list_initialize(&sourcefiles, sizeof(srcfile_t));
     list_resize(&sourcefiles, sourcefilenames.size);
     for(i=0; i<sourcefiles.size; i++)
     {
-        if(!srcfile_load(((char**)sourcefilenames.data)[i], &((srcfile_t*)(sourcefiles.data))[i]))
+        if(!srcfile_load(LIST_FETCH(sourcefilenames, char*, i), &LIST_FETCH(sourcefiles, srcfile_t, i)))
         {
-            cli_errornofile("source", ((char**)sourcefilenames.data)[i]);
+            cli_errornofile("source", LIST_FETCH(sourcefilenames, char*, i));
             abort();
         }
 
-        lexer_tknfile(&((srcfile_t*)(sourcefiles.data))[i]);
+        lexer_tknfile(&LIST_FETCH(sourcefiles, srcfile_t, i));
     }
 
     for(i=0; i<sourcefiles.size; i++)
-        srcfile_free(&((srcfile_t*)(sourcefiles.data))[i]);
+        srcfile_free(&LIST_FETCH(sourcefiles, srcfile_t, i));
     
     list_free(&sourcefiles);
     list_free(&sourcefilenames);
