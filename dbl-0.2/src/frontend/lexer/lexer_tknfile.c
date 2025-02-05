@@ -491,6 +491,7 @@ static bool lexer_tknfile_processdirective(void)
         return false;
 
     lexer_tknfile_advcurchar();
+    lexer_tknfile_skipwhitespace();
     if(!strncmp(curchar, "define", strlen("define")))
     {
         inctop->column += strlen("define");

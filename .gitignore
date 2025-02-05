@@ -1,5 +1,7 @@
 .vscode/
 dbl/bin/
+dbl-0.2/bin/
+dbl-0.2/obj/
 hello/bin/
 
 *.swp
