@@ -5,7 +5,7 @@
 
 #include <list/list.h>
 
-#define CLI_VERSION_IDENT "i" // i for in development
+#define CLI_VERSION_IDENT "i" /* i for in development */
 #define CLI_VERSION_MAJOR 0
 #define CLI_VERSION_MINOR 1
 

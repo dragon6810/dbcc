@@ -1,6 +1,8 @@
 #ifndef _hashmap_h
 #define _hashmap_h
 
+#include <stdbool.h>
+
 /*
  * ================================
  *             MACROS
@@ -27,6 +29,7 @@ struct hashmap_s
     unsigned long int nbuckets;
     
     unsigned long int (*hash)(void*);
+    bool (*cmp)(void*, void*);
 };
 
 struct hashmap_bucket_s
@@ -46,6 +49,6 @@ struct hashmap_bucketitem_s
  * ================================
 */
 
-void hashmap_initialize(hashmap_t* hashmap, unsigned long int (*hash)(void*), unsigned long int nbuckets);
+void hashmap_initialize(hashmap_t* hashmap, unsigned long int (*hash)(void*),  bool (*cmp)(void*, void*), unsigned long int nbuckets);
 
 #endif

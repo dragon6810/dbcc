@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-// I hate this. If i had a hashmap type I'd use that
+/* I hate this. If i had a hashmap type I'd use that */
 int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
 {
     char str[LEXER_MAXHARDTOKENLEN];

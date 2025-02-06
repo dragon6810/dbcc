@@ -117,7 +117,7 @@ static int lexer_tknfile_isidentifier(char* str)
     while(lexer_tknfile_charallowedinidentifier(*strend, false));
     stringlen = strend - str;
 
-    // Make sure it doesn't exactly match a keyword
+    /* Make sure it doesn't exactly match a keyword */
     for(i=LEXER_TOKENTYPE_STARTOFKEYWORDS; i<=LEXER_TOKENTYPE_ENDOFKEYWORDS; i++)
     {
         lexer_tkntypetostring(i, keywordstr);
@@ -515,7 +515,7 @@ static bool lexer_tknfile_processdirective(void)
     return false;
 }
 
-// Returns whether you should consume a char right after
+/* Returns whether you should consume a char right after */
 static bool lexer_tknfile_findnexttkn(void)
 {
     int i;
@@ -690,7 +690,7 @@ static bool lexer_tknfile_eatchar(void)
     return true;
 }
 
-bool lexer_tknfile(srcfile_t* srcfile)
+bool lexer_tknfile(struct srcfile_s* srcfile)
 {
     int i;
 
@@ -721,8 +721,6 @@ bool lexer_tknfile(srcfile_t* srcfile)
     }
 
     srcfile->tokens = tokens;
-
-    //puts(rawtext);
 
     for(i=0; i<defines.size; i++)
     {

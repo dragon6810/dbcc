@@ -10,6 +10,8 @@
 
 void assert_printstacktrace(void)
 {
+    int i;
+
     void **buff;
     char **symbols;
     unsigned int size;
@@ -33,8 +35,8 @@ void assert_printstacktrace(void)
 
     symbols = backtrace_symbols(buff, stacksize);
     fprintf(stderr, "Stack trace:\n");
-    // start at 1 so you dont print this function in the call stack
-    for (int i = 1; i < stacksize; i++)
+    /* start at 1 so you dont print this function in the call stack */
+    for (i=1; i<stacksize; i++)
         fprintf(stderr, "%s\n", symbols[i]);
     
     free(symbols);
