@@ -1,6 +1,7 @@
 #include <hashmap/hashmap.h>
 
 #include <assert/assert.h>
+#include <stdio.h>
 
 void* hashmap_fetch(hashmap_t* hashmap, void* key)
 {
@@ -21,8 +22,11 @@ void* hashmap_fetch(hashmap_t* hashmap, void* key)
     if(!bucket->items)
         return NULL;
 
-    for(curitem=bucket->items; curitem->next; curitem=curitem->next)
+    for(curitem=bucket->items; ; curitem=curitem->next)
     {
+        if(!curitem)
+            break;
+
         if(curitem->hash != hash)
             continue;
 

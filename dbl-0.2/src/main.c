@@ -2,8 +2,26 @@
 #include <stdlib.h>
 
 #include <cli/cli.h>
+#include <hashmap/hashmap.h>
+#include <hashmap/int32/int32.h>
 #include <list/list.h>
 #include <srcfile/srcfile.h>
+
+void testhashmap(void)
+{
+    hashmap_t map;
+    int key, val;
+
+    hashmap_initialize(&map, hashmap_int32_hash, hashmap_int32_cmp, HASHMAP_BUCKETS_MEDIUM, sizeof(int), sizeof(int), NULL, NULL);
+
+    key = 42;
+    val = 64;
+    hashmap_set(&map, &key, &val);
+    val = *((int*)hashmap_fetch(&map, &key));
+    printf("val: %d.\n", val);
+
+    hashmap_free(&map);
+}
 
 int main(int argc, char** argv)
 {
@@ -20,6 +38,9 @@ int main(int argc, char** argv)
         abort();
     }
 
+    testhashmap();
+    return 0;
+    
     list_initialize(&sourcefilenames, sizeof(char*));
     for(i=1; i<argc; i++)
     {

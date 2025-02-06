@@ -17,7 +17,7 @@ void hashmap_free(hashmap_t* hashmap)
         if(!curbucket->items)
             continue;
 
-        for(curitem=curbucket->items; nextitem; curitem=nextitem)
+        for(curitem=nextitem=curbucket->items; nextitem; curitem=nextitem)
         {
             nextitem = curitem->next;
 
@@ -28,6 +28,7 @@ void hashmap_free(hashmap_t* hashmap)
 
             free(curitem->key);
             free(curitem->val);
+            free(curitem);
         }
     }
 

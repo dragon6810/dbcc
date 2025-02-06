@@ -23,6 +23,7 @@ void* hashmap_set(hashmap_t* hashmap, void* key, void* val)
     if(!bucket->items)
     {
         item = calloc(1, sizeof(hashmap_bucketitem_t));
+        bucket->items = item;
     }
     else
     {
