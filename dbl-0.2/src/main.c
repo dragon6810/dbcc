@@ -4,6 +4,7 @@
 #include <cli/cli.h>
 #include <hashmap/hashmap.h>
 #include <hashmap/int32/int32.h>
+#include <hashmap/string/string.h>
 #include <list/list.h>
 #include <srcfile/srcfile.h>
 
@@ -12,13 +13,19 @@ void testhashmap(void)
     hashmap_t map;
     int key, val;
 
-    hashmap_initialize(&map, hashmap_int32_hash, hashmap_int32_cmp, HASHMAP_BUCKETS_MEDIUM, sizeof(int), sizeof(int), NULL, NULL);
+    hashmap_initialize(&map, hashmap_int32_hash, hashmap_int32_cmp, HASHMAP_BUCKETS_MEDIUM, sizeof(int), sizeof(int), NULL, NULL, NULL, NULL);
 
     key = 42;
     val = 64;
     hashmap_set(&map, &key, &val);
     val = *((int*)hashmap_fetch(&map, &key));
-    printf("val: %d.\n", val);
+    printf("expect 64: %d.\n", val);
+
+    key = 106;
+    val = 128;
+    hashmap_set(&map, &key, &val);
+    val = *((int*)hashmap_fetch(&map, &key));
+    printf("expect 128: %d.\n", val);
 
     hashmap_free(&map);
 }

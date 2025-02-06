@@ -47,13 +47,19 @@ void* hashmap_set(hashmap_t* hashmap, void* key, void* val)
     if(!item->key)
     {
         item->key = malloc(hashmap->keysize);
-        memcpy(item->key, key, hashmap->keysize);
+        if(hashmap->copykey)
+            hashmap->copykey(item->key, key);
+        else
+            memcpy(item->key, key, hashmap->keysize);
     }
 
     if(item->val)
         free(item->val);
     item->val = malloc(hashmap->valsize);
-    memcpy(item->val, val, hashmap->valsize);
+    if(hashmap->copyval)
+        hashmap->copyval(item->val, val);
+    else
+        memcpy(item->val, val, hashmap->valsize);
 
     return item->val;
 }

@@ -1,5 +1,7 @@
 #include <hashmap/hashmap.h>
 
+#include <string.h>
+
 #include <assert/assert.h>
 
 void hashmap_free(hashmap_t* hashmap)
@@ -33,4 +35,6 @@ void hashmap_free(hashmap_t* hashmap)
     }
 
     free(hashmap->buckets);
+
+    memset(hashmap, 0, sizeof(hashmap_t));
 }
