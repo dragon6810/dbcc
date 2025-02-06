@@ -16,7 +16,8 @@ unsigned long int hashmap_string_hash(void* data)
     assert(data);
 
     str = *((char**) data);
-    
+    assert(str);
+
     h = 0x9747b28c;
     c1 = 0xcc9e2d51;
     c2 = 0x1b873593;

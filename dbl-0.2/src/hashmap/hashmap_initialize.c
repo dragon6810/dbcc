@@ -18,6 +18,8 @@ void hashmap_initialize(hashmap_t* hashmap, unsigned long int (*hash)(void*),  b
     hashmap->valsize = valsize;
     hashmap->hash = hash;
     hashmap->cmp = cmp;
+    hashmap->freekey = freekey;
+    hashmap->freeval = freeval;
     hashmap->copykey = copykey;
     hashmap->copyval = copyval;
 }
