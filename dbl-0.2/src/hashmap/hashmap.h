@@ -27,9 +27,12 @@ struct hashmap_s
 {
     hashmap_bucket_t *buckets;
     unsigned long int nbuckets;
-    
+    unsigned long int keysize, valsize;
+
     unsigned long int (*hash)(void*);
     bool (*cmp)(void*, void*);
+    void (*freekey)(void*);
+    void (*freeval)(void*);
 };
 
 struct hashmap_bucket_s
@@ -40,7 +43,8 @@ struct hashmap_bucket_s
 struct hashmap_bucketitem_s
 {
     hashmap_bucketitem_t *next;
-    void *payload;
+    unsigned long int hash;
+    void *key, *val;
 };
 
 /*
@@ -49,6 +53,9 @@ struct hashmap_bucketitem_s
  * ================================
 */
 
-void hashmap_initialize(hashmap_t* hashmap, unsigned long int (*hash)(void*),  bool (*cmp)(void*, void*), unsigned long int nbuckets);
+void hashmap_initialize(hashmap_t* hashmap, unsigned long int (*hash)(void*),  bool (*cmp)(void*, void*), unsigned long int nbuckets, unsigned long int keysize, unsigned long int valsize, void (*freekey)(void*), void (*freeval)(void*));
+void* hashmap_fetch(hashmap_t* hashmap, void* key);
+void* hashmap_set(hashmap_t* hashmap, void* key, void* val);
+void hashmap_free(hashmap_t* hashmap);
 
 #endif

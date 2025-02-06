@@ -9,7 +9,8 @@ int main(int argc, char** argv)
 {
     int x;
     char c;
-    char *str = "my string is cool.";
+    char *str = "my string \
+                 is cool.";
 
     // heres a one-line comment
 
