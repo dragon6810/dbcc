@@ -12,7 +12,7 @@ int main(int argc, char** argv)
     char *str = "my string \
                  is cool.";
 
-    // heres a one-line comment
+    /* heres a one-line comment */
 
     x = 0;
     x += 3;
