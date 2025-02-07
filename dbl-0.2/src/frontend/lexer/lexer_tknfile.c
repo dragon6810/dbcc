@@ -28,6 +28,8 @@ struct lexer_tknfile_incstackel_s
     unsigned long int line, column;
 };
 
+#if 0
+
 lexer_tokentype_e state = LEXER_TOKENTYPE_INVALID;
 char *curchar = NULL, *rawtext = NULL;
 unsigned long int stateprogress = 0;
@@ -690,16 +692,40 @@ static bool lexer_tknfile_eatchar(void)
     return true;
 }
 
-bool lexer_tknfile(struct srcfile_s* srcfile)
-{
-    int i;
+#endif
 
-    lexer_tknfile_incstackel_t srcstackel;
+void lexer_tknfile_callphases(lexer_state_t* state, struct srcfile_s* srcfile)
+{
+    lexer_statesrcel_t stackbottom;
+
+    memset(&stackbottom, 0, sizeof(lexer_state_t));
+    strcpy(stackbottom.filename, srcfile->path);
+    stackbottom.curline = stackbottom.curcolumn = 0;
+    list_initialize(&stackbottom.lines, sizeof(lexer_line_t));
+
+    list_initialize(&state->tokens,   sizeof(lexer_token_t));
+    list_initialize(&state->srcstack, sizeof(lexer_statesrcel_t));
+
+    list_push(&state->srcstack, &stackbottom);
+
+    lexer_initialprocessing(state);
+}
+
+bool lexer_tknfile(lexer_state_t* state, struct srcfile_s* srcfile)
+{
+    /* int i; */
+
+    /* lexer_tknfile_incstackel_t srcstackel; */
 
     assert(srcfile);
     assert(srcfile->path);
     assert(srcfile->rawtext);
+    assert(state);
 
+    lexer_tknfile_callphases(state, srcfile);
+    return true;
+
+#if 0
     state = LEXER_TOKENTYPE_INVALID;
     rawtext = curchar = strdup(srcfile->rawtext);
     incomment = 0;
@@ -734,4 +760,5 @@ bool lexer_tknfile(struct srcfile_s* srcfile)
     free(rawtext);
 
     return true;
+#endif
 }

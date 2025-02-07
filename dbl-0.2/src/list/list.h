@@ -41,6 +41,7 @@ void list_initialize(list_t* list, unsigned long int elsize);
 void list_resize(list_t* list, unsigned long int size);
 void* list_push(list_t* list, void* element);
 void list_pop(list_t* list, void* element);
+void list_remove(list_t* list, unsigned long int index);
 void list_fromspan(list_t* new, list_t* list, unsigned long int start, unsigned long int end);
 void list_copy(list_t* new, list_t* old);
 void list_shuffle(list_t* out, list_t* list);

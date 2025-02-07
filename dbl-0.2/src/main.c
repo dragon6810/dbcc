@@ -16,6 +16,7 @@ int main(int argc, char** argv)
 
     list_t sourcefilenames;
     list_t sourcefiles;
+    list_t lexerstates;
 
     cli_initialize();
 
@@ -47,7 +48,9 @@ int main(int argc, char** argv)
     }
 
     list_initialize(&sourcefiles, sizeof(srcfile_t));
+    list_initialize(&lexerstates, sizeof(lexer_state_t));
     list_resize(&sourcefiles, sourcefilenames.size);
+    list_resize(&lexerstates, sourcefilenames.size);
     for(i=0; i<sourcefiles.size; i++)
     {
         if(!srcfile_load(LIST_FETCH(sourcefilenames, char*, i), &LIST_FETCH(sourcefiles, srcfile_t, i)))
@@ -56,7 +59,7 @@ int main(int argc, char** argv)
             abort();
         }
 
-        lexer_tknfile(&LIST_FETCH(sourcefiles, srcfile_t, i));
+        lexer_tknfile(&LIST_FETCH(lexerstates, lexer_state_t, i), &LIST_FETCH(sourcefiles, srcfile_t, i));
     }
 
     for(i=0; i<sourcefiles.size; i++)

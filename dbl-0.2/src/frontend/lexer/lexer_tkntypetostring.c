@@ -75,7 +75,7 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_LE:
         strcpy(str, "<=");
         break;
-    case LEXER_TOKENTYPE_THEN:
+    case LEXER_TOKENTYPE_QUESTION:
         strcpy(str, "?");
         break;
     case LEXER_TOKENTYPE_POUND:
@@ -132,6 +132,9 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_BITOR:
         strcpy(str, "|");
         break;
+    case LEXER_TOKENTYPE_BITXOR:
+        strcpy(str, "^");
+        break;
     case LEXER_TOKENTYPE_BITNOT:
         strcpy(str, "~");
         break;
@@ -146,6 +149,9 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
         break;
     case LEXER_TOKENTYPE_BITOREQ:
         strcpy(str, "|=");
+        break;
+    case LEXER_TOKENTYPE_BITXOREQ:
+        strcpy(str, "^=");
         break;
     case LEXER_TOKENTYPE_BITNOTEQ:
         strcpy(str, "~=");
@@ -260,6 +266,9 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
         break;
     case LEXER_TOKENTYPE_STRING:
         strcpy(str, "string");
+        break;
+    case LEXER_TOKENTYPE_ANGLESTRING:
+        strcpy(str, "angle string");
         break;
     case LEXER_TOKENTYPE_CHARCONSTANT:
         strcpy(str, "character");

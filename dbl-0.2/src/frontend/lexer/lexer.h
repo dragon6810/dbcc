@@ -2,6 +2,9 @@
 #define _lexer_h
 
 #include <stdbool.h>
+#include <limits.h>
+
+#include <list/list.h>
 
 #define LEXER_MAXHARDTOKENLEN 64
 #define LEXER_TOKENTYPE_STARTOFENUM LEXER_TOKENTYPE_EOF
@@ -30,6 +33,9 @@ struct srcfile_s;
 */
 
 typedef struct lexer_token_s lexer_token_t;
+typedef struct lexer_state_s lexer_state_t;
+typedef struct lexer_statesrcel_s lexer_statesrcel_t;
+typedef struct lexer_line_s lexer_line_t;
 
 typedef enum
 {
@@ -60,7 +66,7 @@ typedef enum
     LEXER_TOKENTYPE_LESS,         /* <   */
     LEXER_TOKENTYPE_GE,           /* >=  */
     LEXER_TOKENTYPE_LE,           /* <=  */
-    LEXER_TOKENTYPE_THEN,         /* ?   */
+    LEXER_TOKENTYPE_QUESTION,     /* ?   */
     LEXER_TOKENTYPE_POUND,        /* #   */
     LEXER_TOKENTYPE_PERIOD,       /* .   */
     LEXER_TOKENTYPE_PLUS,         /* +   */
@@ -79,11 +85,13 @@ typedef enum
     LEXER_TOKENTYPE_BITSHIFTR,    /* >>  */
     LEXER_TOKENTYPE_BITAND,       /* &   */
     LEXER_TOKENTYPE_BITOR,        /* |   */
+    LEXER_TOKENTYPE_BITXOR,       /* ^   */
     LEXER_TOKENTYPE_BITNOT,       /* ~   */
     LEXER_TOKENTYPE_BITSHIFTLEQ,  /* <<= */
     LEXER_TOKENTYPE_BITSHIFTREQ,  /* >>= */
     LEXER_TOKENTYPE_BITANDEQ,     /* &=  */
     LEXER_TOKENTYPE_BITOREQ,      /* |=  */
+    LEXER_TOKENTYPE_BITXOREQ,     /* ^=  */
     LEXER_TOKENTYPE_BITNOTEQ,     /* ~=  */
     
     /* Pre-processor */
@@ -127,10 +135,11 @@ typedef enum
     LEXER_TOKENTYPE_WHILE,        /* while    */
 
     /* Dynamics */
-    LEXER_TOKENTYPE_STRING,       /* "[string]"    */
-    LEXER_TOKENTYPE_CHARCONSTANT, /* '[character]' */
-    LEXER_TOKENTYPE_IDENTIFIER,   /* [identifier]  */
-    LEXER_TOKENTYPE_CONSTANT,     /* [constant]    */
+    LEXER_TOKENTYPE_STRING,       /* "[string]"       */
+    LEXER_TOKENTYPE_ANGLESTRING,  /* <[angle string]> */
+    LEXER_TOKENTYPE_CHARCONSTANT, /* '[character]'    */
+    LEXER_TOKENTYPE_IDENTIFIER,   /* [identifier]     */
+    LEXER_TOKENTYPE_CONSTANT,     /* [constant]       */
 } lexer_tokentype_e;
 
 struct lexer_token_s
@@ -142,14 +151,33 @@ struct lexer_token_s
     unsigned long int line, col;
 };
 
+struct lexer_statesrcel_s
+{
+    char filename[PATH_MAX];
+    unsigned long int curline, curcolumn;
+    list_t lines;                         /* lexer_line_t */
+};
+
+struct lexer_line_s
+{
+    char* str;
+    list_t newlines; /* unsigned long int */
+};
+
+struct lexer_state_s
+{
+    list_t tokens;   /* lexer_token_t      */
+    list_t srcstack; /* lexer_statesrcel_t */
+};
+
 /*
  * ================================
  *  EXTERNAL ROUTINES DEFENITIONS
  * ================================
 */
 
-bool lexer_tknfile(struct srcfile_s* srcfile);
-bool lexer_tknoneofmany(lexer_tokentype_e tkn, int n, ...);
+bool lexer_initialprocessing(lexer_state_t* state);
+bool lexer_tknfile(lexer_state_t* state, struct srcfile_s* srcfile);
 int lexer_tkntypetostring(lexer_tokentype_e type, char* name);
 
 #endif
