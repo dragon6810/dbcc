@@ -10,38 +10,6 @@
 #include <list/list.h>
 #include <srcfile/srcfile.h>
 
-void testhashmap(void)
-{
-    hashmap_t map;
-    int key, val;
-    char *skey = "foo", *sval = "bar";
-    char *spval;
-
-    hashmap_initialize(&map, hashmap_int32_hash, hashmap_int32_cmp, HASHMAP_BUCKETS_MEDIUM, sizeof(int), sizeof(int), NULL, NULL, NULL, NULL);
-
-    key = 42;
-    val = 64;
-    hashmap_set(&map, &key, &val);
-    val = *((int*)hashmap_fetch(&map, &key));
-    printf("expect 64: %d.\n", val);
-
-    key = 106;
-    val = 128;
-    hashmap_set(&map, &key, &val);
-    val = *((int*)hashmap_fetch(&map, &key));
-    printf("expect 128: %d.\n", val);
-
-    hashmap_free(&map);
-
-    hashmap_initialize(&map, hashmap_string_hash, hashmap_string_cmp, HASHMAP_BUCKETS_MEDIUM, sizeof(char*), sizeof(char*), hashmap_string_free, hashmap_string_free, hashmap_string_copy, hashmap_string_copy);
-
-    hashmap_set(&map, &skey, &sval);
-    spval = *((char**)hashmap_fetch(&map, &skey));
-    puts(spval);
-
-    hashmap_free(&map);
-}
-
 int main(int argc, char** argv)
 {
     int i;
@@ -56,9 +24,6 @@ int main(int argc, char** argv)
         cli_printusage();
         abort();
     }
-
-    testhashmap();
-    return 0;
     
     list_initialize(&sourcefilenames, sizeof(char*));
     for(i=1; i<argc; i++)
