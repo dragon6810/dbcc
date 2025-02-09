@@ -6,7 +6,7 @@
 #include <cli/cli.h>
 #include <textutils/textutils.h>
 
-void lexer_initialprocessing_cullcomments(lexer_state_t* state)
+static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
 {
     int i, j, k;
     lexer_line_t *curline;
@@ -58,13 +58,9 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
             }
         }
     }
-
-    
-    for(i=0; i<stacktop->lines.size; i++)
-        puts(LIST_FETCH(stacktop->lines, lexer_line_t, i).str);
 }
 
-void lexer_initialprocessing_mergelines(lexer_state_t* state)
+static void lexer_initialprocessing_mergelines(lexer_state_t* state)
 {
     int i, j;
     lexer_line_t *curline;
@@ -104,7 +100,7 @@ void lexer_initialprocessing_mergelines(lexer_state_t* state)
     }
 }
 
-void lexer_initialprocessing_splitlines(lexer_state_t* state)
+static void lexer_initialprocessing_splitlines(lexer_state_t* state)
 {
     unsigned long int pos, i;
     lexer_line_t *curline;

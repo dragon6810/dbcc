@@ -709,6 +709,7 @@ void lexer_tknfile_callphases(lexer_state_t* state, struct srcfile_s* srcfile)
     list_push(&state->srcstack, &stackbottom);
 
     lexer_initialprocessing(state);
+    lexer_tokenize(state);
 }
 
 bool lexer_tknfile(lexer_state_t* state, struct srcfile_s* srcfile)

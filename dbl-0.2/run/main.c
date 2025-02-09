@@ -1,7 +1,7 @@
 #include "incfile.h"
 #include "otherincfile.h"
 
-// #include <string.h>
+/* #include <string.h> */
 
 #define MY_DEFINE (6 + 13)
 

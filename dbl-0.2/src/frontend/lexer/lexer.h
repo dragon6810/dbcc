@@ -147,7 +147,7 @@ struct lexer_token_s
     char *val;
     lexer_tokentype_e type;
     
-    char *file;
+    char file[PATH_MAX];
     unsigned long int line, col;
 };
 
@@ -177,6 +177,8 @@ struct lexer_state_s
 */
 
 bool lexer_initialprocessing(lexer_state_t* state);
+bool lexer_tokenize(lexer_state_t* state);
+
 bool lexer_tknfile(lexer_state_t* state, struct srcfile_s* srcfile);
 int lexer_tkntypetostring(lexer_tokentype_e type, char* name);
 
