@@ -28,6 +28,7 @@ int main(int argc, char** argv)
     */
 
     x += MY_DEFINE;
+    c = '3';
     c = '\n';
 
     return 0;

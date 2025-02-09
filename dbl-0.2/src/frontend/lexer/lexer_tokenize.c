@@ -101,7 +101,13 @@ static int lexer_tokenize_ischarconstant(char* str)
     if(str - beginning > 4)
         return 0;
 
-    if(str - beginning == 3 && (*(str - 1) != '\\'))
+    if((str - beginning == 4) && (*(beginning + 1) != '\\'))
+        return 0;
+
+    if((str - beginning == 3) && (*(beginning + 1) == '\\'))
+        return 0;
+    
+    if(str - beginning < 3)
         return 0;
 
     return str - beginning;
