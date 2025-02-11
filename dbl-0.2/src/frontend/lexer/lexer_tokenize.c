@@ -206,6 +206,8 @@ static lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned lon
     lexer_statesrcel_t *stacktop;
     unsigned long int longlen, curlen;
     lexer_tokentype_e longmatch;
+    LIST_TYPE(lexer_barrier_t) *barriers;
+    lexer_barrier_t *latestbarrier;
     char *linestr;
 
     stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
@@ -214,6 +216,10 @@ static lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned lon
     linestr = LIST_FETCH(stacktop->lines, lexer_line_t, line).str;
     assert(linestr);
     assert(column < strlen(linestr));
+
+    barriers = &LIST_FETCH(stacktop->lines, lexer_line_t, line).barriers;
+    latestbarrier = &LIST_FETCH(LIST_FETCH(stacktop->lines, lexer_line_t, line).barriers, lexer_barrier_t, 0);
+    while((latestbarrier - (lexer_barrier_t*)LIST_FETCH(stacktop->lines, lexer_line_t, line).barriers.data))
 
     longlen = longmatch = 0;
     for(i=LEXER_TOKENTYPE_STARTOFENUM; i<=LEXER_TOKENTYPE_ENDOFENUM; i++)

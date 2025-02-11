@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void list_resize(list_t* list, unsigned long int size)
+void list_resize(list_template_t* list, unsigned long int size)
 {
     unsigned long int pad;
 

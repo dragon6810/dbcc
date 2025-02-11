@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-void list_pop(list_t* list, void* element)
+void list_pop(list_template_t* list, void* element)
 {
     assert(list->elsize);
     assert(list->size);

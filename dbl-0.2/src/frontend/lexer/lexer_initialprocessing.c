@@ -67,7 +67,7 @@ static void lexer_initialprocessing_mergelines(lexer_state_t* state)
 
     lexer_statesrcel_t *stacktop;
     char *newstr, *append;
-    unsigned long int newline;
+    lexer_barrier_t barrier;
 
     stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
 
@@ -88,8 +88,9 @@ static void lexer_initialprocessing_mergelines(lexer_state_t* state)
         newstr = malloc(strlen(curline->str) - 1 + strlen(append) + 1);
         strcpy(newstr, curline->str);
         newstr[j] = 0;
-        newline = j;
-        list_push(&curline->newlines, &newline);
+        barrier.line = j;
+        barrier.column = barrier.position = 0;
+        list_push(&curline->barriers, &barrier);
         strcat(newstr, append);
         free(curline->str);
         curline->str = newstr;
@@ -110,6 +111,7 @@ static void lexer_initialprocessing_splitlines(lexer_state_t* state)
     unsigned long int filelen;
     lexer_statesrcel_t *stacktop;
     lexer_line_t newline;
+    lexer_barrier_t barrier;
 
     stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
 
@@ -134,8 +136,10 @@ static void lexer_initialprocessing_splitlines(lexer_state_t* state)
             memcpy(newline.str, &data[pos], i - 1);
             pos += i;
             
-            list_initialize(&newline.newlines, sizeof(unsigned long int));
-            list_push(&newline.newlines, &i);
+            list_initialize(&newline.barriers, sizeof(unsigned long int));
+            barrier.line = i;
+            barrier.column = barrier.position = 0;
+            list_push(&newline.barriers, &i);
 
             list_push(&stacktop->lines, &newline);
         }

@@ -4,12 +4,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-void list_copy(list_t* new, list_t* old)
+void list_copy(list_template_t* new, list_template_t* old)
 {
     assert(new);
     assert(old);
 
-    memcpy(new, old, sizeof(list_t));
+    memcpy(new, old, sizeof(list_template_t));
     new->data = malloc(new->buffsize);
     memcpy(new->data, old->data, new->buffsize);
 }

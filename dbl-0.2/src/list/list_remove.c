@@ -4,7 +4,7 @@
 
 #include <assert/assert.h>
 
-void list_remove(list_t* list, unsigned long int index)
+void list_remove(list_template_t* list, unsigned long int index)
 {
     void *before, *after;
 

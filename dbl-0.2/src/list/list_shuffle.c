@@ -26,7 +26,7 @@ static void list_shuffle_swap(void* a, void* b, unsigned long int size)
     free(temp);
 }
 
-void list_shuffle(list_t* out, list_t* list)
+void list_shuffle(list_template_t* out, list_template_t* list)
 {
     unsigned long int i, j;
 

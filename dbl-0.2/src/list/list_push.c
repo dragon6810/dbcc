@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void* list_push(list_t* list, void* element)
+void* list_push(list_template_t* list, void* element)
 {
     assert(list->elsize);
 

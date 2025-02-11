@@ -9,15 +9,31 @@
 
 #define LIST_FETCH(list, type, index) (((type*)list.data)[index])
 
+#define LIST_TYPE(type) struct  \ 
+{                               \
+    unsigned long int size;     \
+    unsigned long int buffsize; \
+    unsigned long int elsize;   \
+    type* data;                 \
+}
+
+#define LIST_INIT(list) do                        \
+{                                                 \
+    (list).size = 0;                              \
+    (list).buffsize = 0;                          \
+    (list).elsize = sizeof(typeof(*(list).data)); \
+    (list).data = NULL;                           \
+} while(0)
+
 /*
  * ================================
  *        TYPES DEFENITIONS
  * ================================
 */
 
-typedef struct list_s list_t;
+typedef struct list_template_s list_template_t;
 
-struct list_s
+struct list_template_s
 {
     unsigned long int size;
     unsigned long int buffsize;
@@ -37,14 +53,14 @@ struct list_s
  * ================================
 */
 
-void list_initialize(list_t* list, unsigned long int elsize);
-void list_resize(list_t* list, unsigned long int size);
-void* list_push(list_t* list, void* element);
-void list_pop(list_t* list, void* element);
-void list_remove(list_t* list, unsigned long int index);
-void list_fromspan(list_t* new, list_t* list, unsigned long int start, unsigned long int end);
-void list_copy(list_t* new, list_t* old);
-void list_shuffle(list_t* out, list_t* list);
-void list_free(list_t* list);
+void list_initialize(list_template_t* list, unsigned long int elsize);
+void list_resize(list_template_t* list, unsigned long int size);
+void* list_push(list_template_t* list, void* element);
+void list_pop(list_template_t* list, void* element);
+void list_remove(list_template_t* list, unsigned long int index);
+void list_fromspan(list_template_t* new, list_template_t* list, unsigned long int start, unsigned long int end);
+void list_copy(list_template_t* new, list_template_t* old);
+void list_shuffle(list_template_t* out, list_template_t* list);
+void list_free(list_template_t* list);
 
 #endif

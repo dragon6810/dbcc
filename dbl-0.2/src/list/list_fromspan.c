@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void list_fromspan(list_t* new, list_t* list, unsigned long int start, unsigned long int end)
+void list_fromspan(list_template_t* new, list_template_t* list, unsigned long int start, unsigned long int end)
 {
     assert(new);
     assert(list);

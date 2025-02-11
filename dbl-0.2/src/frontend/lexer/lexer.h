@@ -35,6 +35,7 @@ struct srcfile_s;
 typedef struct lexer_token_s lexer_token_t;
 typedef struct lexer_state_s lexer_state_t;
 typedef struct lexer_statesrcel_s lexer_statesrcel_t;
+typedef struct lexer_barrier_s lexer_barrier_t;
 typedef struct lexer_line_s lexer_line_t;
 
 typedef enum
@@ -158,10 +159,16 @@ struct lexer_statesrcel_s
     list_t lines;                         /* lexer_line_t */
 };
 
+struct lexer_barrier_s
+{
+    unsigned long int position;
+    unsigned long int line, column;
+};
+
 struct lexer_line_s
 {
     char* str;
-    list_t newlines; /* unsigned long int */
+    list_t barriers; /* lexer_barrier_t */
 };
 
 struct lexer_state_s
