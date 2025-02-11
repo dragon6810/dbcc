@@ -14,10 +14,11 @@
 
 typedef struct srcfile_s srcfile_t;
 
+LIST_TYPE(srcfile_t, list_srcfile)
+
 struct srcfile_s
 {
     char *path, *rawtext;
-    list_t tokens;
 };
 
 bool srcfile_load(char* path, srcfile_t* srcfile);

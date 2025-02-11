@@ -54,7 +54,7 @@ static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
                 LIST_FETCH(stacktop->lines, lexer_line_t, endline).str = textutils_remove(str, 0, endcol);
 
                 for(k=startline+1; k<endline; k++)
-                    list_remove(&stacktop->lines, startline + 1);
+                    LIST_REMOVE(stacktop->lines, startline + 1);
             }
         }
     }
@@ -90,18 +90,18 @@ static void lexer_initialprocessing_mergelines(lexer_state_t* state)
         newstr[j] = 0;
         barrier.line = j;
         barrier.column = barrier.position = 0;
-        list_push(&curline->barriers, &barrier);
+        LIST_PUSH(curline->barriers, barrier);
         strcat(newstr, append);
         free(curline->str);
         curline->str = newstr;
 
         free((curline+1)->str);
-        list_remove(&stacktop->lines, i + 1);
+        LIST_REMOVE(stacktop->lines, i + 1);
         i--;
     }
 }
 
-static void lexer_initialprocessing_splitlines(lexer_state_t* state)
+void lexer_initialprocessing_splitlines(lexer_state_t* state)
 {
     unsigned long int pos, i;
     lexer_line_t *curline;
@@ -136,12 +136,12 @@ static void lexer_initialprocessing_splitlines(lexer_state_t* state)
             memcpy(newline.str, &data[pos], i - 1);
             pos += i;
             
-            list_initialize(&newline.barriers, sizeof(unsigned long int));
+            LIST_INITIALIZE(newline.barriers);
             barrier.line = i;
             barrier.column = barrier.position = 0;
-            list_push(&newline.barriers, &i);
+            LIST_PUSH(newline.barriers, barrier);
 
-            list_push(&stacktop->lines, &newline);
+            LIST_PUSH(stacktop->lines, newline);
         }
     }
     

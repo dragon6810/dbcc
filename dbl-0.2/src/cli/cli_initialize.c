@@ -1,6 +1,7 @@
 #include <cli/cli.h>
 
 #include <stdio.h>
+#include <string.h>
 
 void cli_initialize_defaultincludedirs(void)
 {
@@ -12,12 +13,15 @@ void cli_initialize_defaultincludedirs(void)
     const char *usrinc = "";
 #endif
 
-    list_push(&cli_includedirs, &usrinc);
+    char *cur;
+
+    cur = strdup(usrinc);
+    LIST_PUSH(cli_includedirs, cur);
 }
 
 void cli_initialize(void)
 {
-    list_initialize(&cli_includedirs, sizeof(const char*));
+    LIST_INITIALIZE(cli_includedirs);
 
     cli_initialize_defaultincludedirs();
 }

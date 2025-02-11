@@ -7,7 +7,7 @@ void cli_processflag_processincludedir(const char* flag)
     const char *start;
 
     start = flag + 2;
-    list_push(&cli_includedirs, &start);
+    LIST_PUSH(cli_includedirs, start);
 }
 
 void cli_processflag(const char* flag)

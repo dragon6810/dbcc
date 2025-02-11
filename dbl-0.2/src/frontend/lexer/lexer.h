@@ -38,6 +38,12 @@ typedef struct lexer_statesrcel_s lexer_statesrcel_t;
 typedef struct lexer_barrier_s lexer_barrier_t;
 typedef struct lexer_line_s lexer_line_t;
 
+LIST_TYPE(lexer_line_t, list_lexer_line)
+LIST_TYPE(lexer_barrier_t, list_lexer_barrier)
+LIST_TYPE(lexer_token_t, list_lexer_token)
+LIST_TYPE(lexer_statesrcel_t, list_lexer_statesrcel)
+LIST_TYPE(lexer_state_t, list_lexer_state)
+
 typedef enum
 {
     LEXER_TOKENTYPE_INVALID=-1,
@@ -156,7 +162,7 @@ struct lexer_statesrcel_s
 {
     char filename[PATH_MAX];
     unsigned long int curline, curcolumn;
-    list_t lines;                         /* lexer_line_t */
+    list_lexer_line_t lines;
 };
 
 struct lexer_barrier_s
@@ -168,13 +174,13 @@ struct lexer_barrier_s
 struct lexer_line_s
 {
     char* str;
-    list_t barriers; /* lexer_barrier_t */
+    list_lexer_barrier_t barriers;
 };
 
 struct lexer_state_s
 {
-    list_t tokens;   /* lexer_token_t      */
-    list_t srcstack; /* lexer_statesrcel_t */
+    list_lexer_token_t tokens;
+    list_lexer_statesrcel_t srcstack;
 };
 
 /*

@@ -9,21 +9,31 @@
 
 #define LIST_FETCH(list, type, index) (((type*)list.data)[index])
 
-#define LIST_TYPE(type) struct  \ 
+#define LIST_TYPE(type, name) typedef struct name##_s \
 {                               \
     unsigned long int size;     \
     unsigned long int buffsize; \
     unsigned long int elsize;   \
     type* data;                 \
-}
+} name##_t;
 
-#define LIST_INIT(list) do                        \
-{                                                 \
-    (list).size = 0;                              \
-    (list).buffsize = 0;                          \
-    (list).elsize = sizeof(typeof(*(list).data)); \
-    (list).data = NULL;                           \
-} while(0)
+#define LIST_INITIALIZE(list) (list_initialize((list_template_t*)&(list), sizeof(typeof(*((list).data)))))
+
+#define LIST_RESIZE(list, size) (list_resize((list_template_t*)&(list), (unsigned long int) size))
+
+#define LIST_PUSH(list, value) list_push((list_template_t*)&(list), &value)
+
+#define LIST_POP(list, out) (list_pop((list_template_t*)&(list), out))
+
+#define LIST_REMOVE(list, index) (list_remove((list_template_t*)&(list), (unsigned long int) index));
+
+#define LIST_FROMSPAN(new, list, start, end) (list_fromspan((list_template_t*)&(new), (list_template_t*)&(list), (unsigned long int) start, (unsigned long int) end))
+
+#define LIST_COPY(new, old) (list_copy((list_template_t*)&(new), (list_template_t*)&(old)))
+
+#define LIST_SHUFFLE(out, list) (list_shuffle((list_template_t*)&(out), (list_template_t*)&(list)))
+
+#define LIST_FREE(list) (list_free((list_template_t*)&(list)))
 
 /*
  * ================================

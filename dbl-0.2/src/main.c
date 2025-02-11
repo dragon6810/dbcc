@@ -14,9 +14,9 @@ int main(int argc, char** argv)
 {
     int i;
 
-    list_t sourcefilenames;
-    list_t sourcefiles;
-    list_t lexerstates;
+    list_str_t sourcefilenames;
+    list_srcfile_t sourcefiles;
+    list_lexer_state_t lexerstates;
 
     cli_initialize();
 
@@ -26,12 +26,12 @@ int main(int argc, char** argv)
         abort();
     }
     
-    list_initialize(&sourcefilenames, sizeof(char*));
+    LIST_INITIALIZE(sourcefilenames);
     for(i=1; i<argc; i++)
     {
         if(argv[i][0] != '-')
         {
-            list_push(&sourcefilenames, &argv[i]);
+            LIST_PUSH(sourcefilenames, argv[i]);
             continue;
         }
 
@@ -47,13 +47,13 @@ int main(int argc, char** argv)
             printf("    %s\n", LIST_FETCH(sourcefilenames, char*, i));
     }
 
-    list_initialize(&sourcefiles, sizeof(srcfile_t));
-    list_initialize(&lexerstates, sizeof(lexer_state_t));
-    list_resize(&sourcefiles, sourcefilenames.size);
-    list_resize(&lexerstates, sourcefilenames.size);
+    LIST_INITIALIZE(sourcefiles);
+    LIST_INITIALIZE(lexerstates);
+    LIST_RESIZE(sourcefiles, sourcefilenames.size);
+    LIST_RESIZE(lexerstates, sourcefilenames.size);
     for(i=0; i<sourcefiles.size; i++)
     {
-        if(!srcfile_load(LIST_FETCH(sourcefilenames, char*, i), &LIST_FETCH(sourcefiles, srcfile_t, i)))
+        if(!srcfile_load(sourcefilenames.data[i], &sourcefiles.data[i]))
         {
             cli_errornofile("source", LIST_FETCH(sourcefilenames, char*, i));
             abort();
@@ -63,10 +63,10 @@ int main(int argc, char** argv)
     }
 
     for(i=0; i<sourcefiles.size; i++)
-        srcfile_free(&LIST_FETCH(sourcefiles, srcfile_t, i));
+        srcfile_free(&sourcefiles.data[i]);
     
-    list_free(&sourcefiles);
-    list_free(&sourcefilenames);
+    LIST_FREE(sourcefiles);
+    LIST_FREE(sourcefilenames);
     
     return 0;
 }

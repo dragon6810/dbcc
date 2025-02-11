@@ -5,6 +5,7 @@ dbl-0.2/obj/
 hello/bin/
 
 *.swp
+*.i
 
 # Prerequisites
 *.d

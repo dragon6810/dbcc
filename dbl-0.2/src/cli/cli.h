@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include <list/list.h>
+#include <list/list_types.h>
 
 #define CLI_VERSION_IDENT "i" /* i for in development */
 #define CLI_VERSION_MAJOR 0
@@ -16,7 +17,7 @@
 */
 
 extern bool cli_verbose;
-extern list_t cli_includedirs;
+extern list_str_t cli_includedirs;
 
 /*
  * ================================

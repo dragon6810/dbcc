@@ -701,12 +701,12 @@ void lexer_tknfile_callphases(lexer_state_t* state, struct srcfile_s* srcfile)
     memset(&stackbottom, 0, sizeof(lexer_state_t));
     strcpy(stackbottom.filename, srcfile->path);
     stackbottom.curline = stackbottom.curcolumn = 0;
-    list_initialize(&stackbottom.lines, sizeof(lexer_line_t));
+    LIST_INITIALIZE(stackbottom.lines);
 
-    list_initialize(&state->tokens,   sizeof(lexer_token_t));
-    list_initialize(&state->srcstack, sizeof(lexer_statesrcel_t));
+    LIST_INITIALIZE(state->tokens);
+    LIST_INITIALIZE(state->srcstack);
 
-    list_push(&state->srcstack, &stackbottom);
+    LIST_PUSH(state->srcstack, stackbottom);
 
     lexer_initialprocessing(state);
     lexer_tokenize(state);

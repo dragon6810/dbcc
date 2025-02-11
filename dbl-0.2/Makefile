@@ -1,5 +1,5 @@
 CC := clang -c
-CC_FLAGS := -D_POSIX_C_SOURCE=200809L -Wall -Werror -O3 -g -std=c89 -MMD -MP -fsanitize=address
+CC_FLAGS := -D_POSIX_C_SOURCE=200809L -Wall -Werror -O3 -g -std=gnu89 -MMD -MP -fsanitize=address
 
 LD := clang
 LD_FLAGS := -fsanitize=address
@@ -31,9 +31,10 @@ ifneq ($(filter arm%,$(UNAME_P)),)
 	CC_FLAGS := $(CC_FLAGS) -D ARM
 endif
 
-.PHONY: all mkdirs clean
+.PHONY: all mkdirs clean preprocessed
 
 all: mkdirs $(BIN_FILE)
+preprocessed: mkdirs $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.i, $(SRC_FILE))
 
 mkdirs:
 	@mkdir -p $(BIN_DIR)
@@ -45,6 +46,10 @@ $(BIN_FILE): $(OBJ_FILE)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CC_FLAGS) -c $< -o $@
+
+$(OBJ_DIR)/%.i: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CC_FLAGS) -E $< -o $@
 
 -include $(OBJ_FILE:.o=.d)
 
