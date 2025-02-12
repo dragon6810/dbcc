@@ -15,7 +15,6 @@ void* list_push(list_template_t* list, void* element)
         list->size = 1;
         list->buffsize = list->elsize;
         list->data = malloc(list->elsize);
-        printf("%lu.\n", list->elsize);
         memcpy(list->data, element, list->elsize);
         return list->data;
     }

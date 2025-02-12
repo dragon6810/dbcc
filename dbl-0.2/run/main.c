@@ -12,6 +12,8 @@ int main(int argc, char** argv)
     char *str = "my string \
                  is cool.";
 
+    x = 1;
+
     /* heres a one-line comment */
 
     x = 0;

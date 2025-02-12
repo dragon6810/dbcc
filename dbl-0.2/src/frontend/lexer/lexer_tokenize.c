@@ -198,7 +198,7 @@ static void lexer_tokenize_errnotoken(lexer_state_t* state, unsigned long int li
     abort();
 }
 
-static lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned long int line, unsigned long int column)
+lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned long int line, unsigned long int column)
 {
     int i;
 
@@ -219,9 +219,9 @@ static lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned lon
 
     barriers = &stacktop->lines.data[line].barriers;
     latestbarrier = &LIST_FETCH(LIST_FETCH(stacktop->lines, lexer_line_t, line).barriers, lexer_barrier_t, 0);
-    while((latestbarrier - barriers->data) < barriers->size && latestbarrier->position < column)
+    while((latestbarrier - barriers->data) < barriers->size - 1 && latestbarrier->position < column)
         latestbarrier++;
-    if(latestbarrier->position > column)
+    if(latestbarrier->position > column && (latestbarrier - barriers->data))
         latestbarrier--;
 
     longlen = longmatch = 0;
@@ -243,13 +243,13 @@ static lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned lon
     token.val[longlen] = 0;
     token.type = longmatch;
     strcpy(token.file, stacktop->filename);
-    token.line = line;
-    token.col = column;
+    token.line = latestbarrier->line;
+    token.col = column - latestbarrier->position + latestbarrier->column;
 
     return token;
 }
 
-static bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
+bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
 {
     lexer_statesrcel_t *stacktop;
     lexer_line_t *pline;
@@ -270,7 +270,7 @@ static bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
     {
         token = lexer_tokenize_findtoken(state, line, column);
         lexer_tkntypetostring(token.type, type);
-        printf("token: \"%s\" (\"%s\").\n", token.val, type);
+        printf("token: \"%s\" (\"%s\") %s:%lu:%lu.\n", token.val, type, token.file, token.line + 1, token.col + 1);
         column += strlen(token.val);
     
         while(column < linelen && pline->str[column] <= 32)
