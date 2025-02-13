@@ -1,3 +1,5 @@
+#ifdef DEBUG
+
 #include <assert/assert.h>
 
 #include <execinfo.h>
@@ -42,3 +44,5 @@ void assert_printstacktrace(void)
     free(symbols);
     free(buff);
 }
+
+#endif

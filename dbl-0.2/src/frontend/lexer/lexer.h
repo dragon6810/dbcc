@@ -192,7 +192,7 @@ struct lexer_state_s
 bool lexer_initialprocessing(lexer_state_t* state);
 bool lexer_tokenize(lexer_state_t* state);
 
-bool lexer_tknfile(struct srcfile_s* srcfile);
+bool lexer_lexfile(struct srcfile_s* srcfile);
 int lexer_tkntypetostring(lexer_tokentype_e type, char* name);
 
 #endif

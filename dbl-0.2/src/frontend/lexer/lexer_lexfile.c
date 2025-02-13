@@ -28,7 +28,7 @@ void lexer_tknfile_callphases(lexer_state_t* state, struct srcfile_s* srcfile)
     lexer_tokenize(state);
 }
 
-bool lexer_tknfile(struct srcfile_s* srcfile)
+bool lexer_lexfile(struct srcfile_s* srcfile)
 {
     assert(srcfile);
     assert(srcfile->path);

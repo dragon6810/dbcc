@@ -188,7 +188,7 @@ static void lexer_tokenize_errnotoken(lexer_state_t* state, unsigned long int li
 {
     lexer_statesrcel_t *stacktop;
 
-    stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
     printf("\033[0;1m%s:%lu:%lu: ", stacktop->filename, line, column);
     printf("\033[31;1merror: ");
@@ -210,15 +210,15 @@ static lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned lon
     lexer_barrier_t *latestbarrier;
     char *linestr;
 
-    stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
     assert(line < stacktop->lines.size);
-    linestr = LIST_FETCH(stacktop->lines, lexer_line_t, line).str;
+    linestr = stacktop->lines.data[line].str;
     assert(linestr);
     assert(column < strlen(linestr));
 
     barriers = &stacktop->lines.data[line].barriers;
-    latestbarrier = &LIST_FETCH(LIST_FETCH(stacktop->lines, lexer_line_t, line).barriers, lexer_barrier_t, 0);
+    latestbarrier = &stacktop->lines.data[line].barriers.data[0];
     while((latestbarrier - barriers->data) < barriers->size - 1 && latestbarrier->position < column)
         latestbarrier++;
     if(latestbarrier->position > column && (latestbarrier - barriers->data))
@@ -257,9 +257,9 @@ static bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
     char type[LEXER_MAXHARDTOKENLEN];
     unsigned long int column, linelen;
 
-    stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
     assert(line < stacktop->lines.size);
-    pline = &LIST_FETCH(stacktop->lines, lexer_line_t, line);
+    pline = &stacktop->lines.data[line];
     linelen = strlen(pline->str);
 
     column = 0;
@@ -288,7 +288,7 @@ bool lexer_tokenize(lexer_state_t* state)
 
     lexer_statesrcel_t *stacktop;
 
-    stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
     for(i=0; i<stacktop->lines.size; i++)
         lexer_tokenizeline(state, i);

@@ -15,7 +15,6 @@ int main(int argc, char** argv)
     int i;
 
     list_str_t sourcefilenames;
-    list_srcfile_t sourcefiles;
 
     cli_initialize();
 
@@ -43,26 +42,25 @@ int main(int argc, char** argv)
 
         printf("source files:\n");
         for(i=0; i<sourcefilenames.size; i++)
-            printf("    %s\n", LIST_FETCH(sourcefilenames, char*, i));
+            printf("    %s\n", sourcefilenames.data[i]);
     }
 
-    LIST_INITIALIZE(sourcefiles);
-    LIST_RESIZE(sourcefiles, sourcefilenames.size);
-    for(i=0; i<sourcefiles.size; i++)
+    LIST_RESIZE(cli_allunits, sourcefilenames.size);
+    for(i=0; i<cli_allunits.size; i++)
     {
-        if(!srcfile_load(sourcefilenames.data[i], &sourcefiles.data[i]))
+        if(!srcfile_load(sourcefilenames.data[i], &cli_allunits.data[i]))
         {
-            cli_errornofile("source", LIST_FETCH(sourcefilenames, char*, i));
+            cli_errornofile("source", sourcefilenames.data[i]);
             abort();
         }
 
-        lexer_tknfile(&LIST_FETCH(sourcefiles, srcfile_t, i));
+        srcfile_compile(&cli_allunits.data[i]);
     }
 
-    for(i=0; i<sourcefiles.size; i++)
-        srcfile_free(&sourcefiles.data[i]);
+    for(i=0; i<cli_allunits.size; i++)
+        srcfile_free(&cli_allunits.data[i]);
     
-    LIST_FREE(sourcefiles);
+    LIST_FREE(cli_allunits);
     LIST_FREE(sourcefilenames);
     
     return 0;

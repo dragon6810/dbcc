@@ -23,6 +23,7 @@ struct srcfile_s
 };
 
 bool srcfile_load(char* path, srcfile_t* srcfile);
+bool srcfile_compile(srcfile_t* srcfile);
 void srcfile_free(srcfile_t* srcfile);
 
 #endif

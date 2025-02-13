@@ -6,6 +6,8 @@
 #include <list/list.h>
 #include <list/list_types.h>
 
+#include <srcfile/srcfile.h>
+
 #define CLI_VERSION_IDENT "i" /* i for in development */
 #define CLI_VERSION_MAJOR 0
 #define CLI_VERSION_MINOR 1
@@ -18,6 +20,7 @@
 
 extern bool cli_verbose;
 extern list_str_t cli_includedirs;
+extern list_srcfile_t cli_allunits;
 
 /*
  * ================================

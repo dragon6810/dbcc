@@ -22,6 +22,7 @@ void cli_initialize_defaultincludedirs(void)
 void cli_initialize(void)
 {
     LIST_INITIALIZE(cli_includedirs);
+    LIST_INITIALIZE(cli_allunits);
 
     cli_initialize_defaultincludedirs();
 }

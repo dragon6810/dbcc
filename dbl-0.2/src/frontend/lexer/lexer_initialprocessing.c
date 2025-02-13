@@ -6,7 +6,7 @@
 #include <cli/cli.h>
 #include <textutils/textutils.h>
 
-void lexer_initialprocessing_cullcomments(lexer_state_t* state)
+static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
 {
     int i, j, k;
     lexer_line_t *curline;
@@ -19,15 +19,15 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
     lexer_line_t *pstartline, *pendline;
     char *str;
 
-    stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
     for(i=0, inblock=false; i<stacktop->lines.size; i++)
     {
-        curline = &LIST_FETCH(stacktop->lines, lexer_line_t, i);
+        curline = &stacktop->lines.data[i];
         linelen = strlen(curline->str);
         for(j=0; j<linelen-1; j++)
         {
-            curline = &LIST_FETCH(stacktop->lines, lexer_line_t, i);
+            curline = &stacktop->lines.data[i];
             linelen = strlen(curline->str);
 
             if(!inblock && !strncmp(curline->str + j, "/*", 2))
@@ -84,11 +84,11 @@ static void lexer_initialprocessing_mergelines(lexer_state_t* state)
     char *newstr, *append;
     lexer_barrier_t barrier;
 
-    stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
     for(i=0; i<stacktop->lines.size; i++)
     {
-        curline = &LIST_FETCH(stacktop->lines, lexer_line_t, i);
+        curline = &stacktop->lines.data[i];
         
         for(j=strlen(curline->str)-1; (j>=0) && (curline->str[j]<=32); j--);
         if(j<0 || curline->str[j] != '\\' || i == stacktop->lines.size - 1)
@@ -118,7 +118,7 @@ static void lexer_initialprocessing_mergelines(lexer_state_t* state)
     }
 }
 
-void lexer_initialprocessing_splitlines(lexer_state_t* state)
+static void lexer_initialprocessing_splitlines(lexer_state_t* state)
 {
     unsigned long int pos, i, j;
     lexer_line_t *curline;
@@ -130,7 +130,7 @@ void lexer_initialprocessing_splitlines(lexer_state_t* state)
     lexer_line_t newline;
     lexer_barrier_t barrier;
 
-    stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
     ptr = fopen(stacktop->filename, "r");
     if(!ptr)

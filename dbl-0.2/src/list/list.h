@@ -7,8 +7,6 @@
  * ================================
 */
 
-#define LIST_FETCH(list, type, index) (((type*)list.data)[index])
-
 #define LIST_TYPE(type, name) typedef struct name##_s \
 {                               \
     unsigned long int size;     \

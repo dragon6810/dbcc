@@ -4,12 +4,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void assert_printstacktrace(void);
-
+#ifdef DEBUG
 #define assert(expr) ((expr) ? (void)0 : \
                       (fprintf(stderr, "Assertion Failed: \"%s\", file: \"%s\", line: %d.\n", \
                                 #expr, __FILE__, __LINE__), \
                                 assert_printstacktrace(), \
                                 abort()))
+
+void assert_printstacktrace(void);
+#else
+#define assert(expr) ()
+#endif
 
 #endif
