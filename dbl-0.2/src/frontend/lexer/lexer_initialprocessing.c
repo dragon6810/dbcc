@@ -6,7 +6,7 @@
 #include <cli/cli.h>
 #include <textutils/textutils.h>
 
-static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
+void lexer_initialprocessing_cullcomments(lexer_state_t* state)
 {
     int i, j, k;
     lexer_line_t *curline;
@@ -27,9 +27,6 @@ static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
         linelen = strlen(curline->str);
         for(j=0; j<linelen-1; j++)
         {
-            curline = &stacktop->lines.data[i];
-            linelen = strlen(curline->str);
-
             if(!inblock && !strncmp(curline->str + j, "/*", 2))
             {
                 inblock = true;
@@ -64,13 +61,16 @@ static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
                 free(pstartline->str);
                 free(pendline->str);
                 pstartline->str = str;
-                puts(str);
 
-                LIST_REMOVE(stacktop->lines, endline);
-
-                for(k=startline+1; k<endline; k++)
+                for(k=startline+1; k<endline+1; k++)
                     LIST_REMOVE(stacktop->lines, startline + 1);
+
+                puts(str);
+                puts((pstartline+1)->str);
             }
+
+            curline = &stacktop->lines.data[i];
+            linelen = strlen(curline->str);
         }
     }
 }

@@ -19,16 +19,13 @@ int main(int argc, char** argv)
     x = 0;
     x +=/* com */3;
     x *= -1;
-    x--;
-
-    /*
+    x--;/*
      * This is
      * a multi
      * line
      * comment
      * cool
-    */ 
-    x += MY_DEFINE;
+    */x += MY_DEFINE;
     c = '3';
     c = '\n';
 
