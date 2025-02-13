@@ -61,14 +61,14 @@ struct list_template_s
  * ================================
 */
 
-void list_initialize(list_template_t* list, unsigned long int elsize);
-void list_resize(list_template_t* list, unsigned long int size);
+void  list_initialize(list_template_t* list, unsigned long int elsize);
+void  list_resize(list_template_t* list, unsigned long int size);
 void* list_push(list_template_t* list, void* element);
-void list_pop(list_template_t* list, void* element);
-void list_remove(list_template_t* list, unsigned long int index);
-void list_fromspan(list_template_t* new, list_template_t* list, unsigned long int start, unsigned long int end);
-void list_copy(list_template_t* new, list_template_t* old);
-void list_shuffle(list_template_t* out, list_template_t* list);
-void list_free(list_template_t* list);
+void  list_pop(list_template_t* list, void* element);
+void  list_remove(list_template_t* list, unsigned long int index);
+void  list_fromspan(list_template_t* new, list_template_t* list, unsigned long int start, unsigned long int end);
+void  list_copy(list_template_t* new, list_template_t* old);
+void  list_shuffle(list_template_t* out, list_template_t* list);
+void  list_free(list_template_t* list);
 
 #endif

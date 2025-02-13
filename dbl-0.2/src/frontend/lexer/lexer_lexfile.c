@@ -26,6 +26,9 @@ void lexer_tknfile_callphases(lexer_state_t* state, struct srcfile_s* srcfile)
 
     lexer_initialprocessing(state);
     lexer_tokenize(state);
+
+    if(cli_verbose)
+        lexer_printtokens(state);
 }
 
 bool lexer_lexfile(struct srcfile_s* srcfile)
@@ -35,5 +38,6 @@ bool lexer_lexfile(struct srcfile_s* srcfile)
     assert(srcfile->rawtext);
 
     lexer_tknfile_callphases(&srcfile->lexer, srcfile);
+
     return true;
 }

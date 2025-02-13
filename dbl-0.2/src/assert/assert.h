@@ -13,7 +13,7 @@
 
 void assert_printstacktrace(void);
 #else
-#define assert(expr) ()
+#define assert(expr)
 #endif
 
 #endif

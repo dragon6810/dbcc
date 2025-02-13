@@ -75,6 +75,7 @@ typedef enum
     LEXER_TOKENTYPE_LE,           /* <=  */
     LEXER_TOKENTYPE_QUESTION,     /* ?   */
     LEXER_TOKENTYPE_POUND,        /* #   */
+    LEXER_TOKENTYPE_DBLPOUND,     /* ##  */
     LEXER_TOKENTYPE_PERIOD,       /* .   */
     LEXER_TOKENTYPE_PLUS,         /* +   */
     LEXER_TOKENTYPE_MINUS,        /* -   */
@@ -191,8 +192,8 @@ struct lexer_state_s
 
 bool lexer_initialprocessing(lexer_state_t* state);
 bool lexer_tokenize(lexer_state_t* state);
-
 bool lexer_lexfile(struct srcfile_s* srcfile);
 int lexer_tkntypetostring(lexer_tokentype_e type, char* name);
+void lexer_printtokens(lexer_state_t* state);
 
 #endif

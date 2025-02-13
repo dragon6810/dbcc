@@ -249,7 +249,7 @@ static lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned lon
     return token;
 }
 
-static bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
+static bool lexer_tokenize_tokenizeline(lexer_state_t* state, unsigned long int line)
 {
     lexer_statesrcel_t *stacktop;
     lexer_line_t *pline;
@@ -270,7 +270,6 @@ static bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
     {
         token = lexer_tokenize_findtoken(state, line, column);
         lexer_tkntypetostring(token.type, type);
-        printf("token: \"%s\" (\"%s\") %s:%lu:%lu.\n", token.val, type, token.file, token.line + 1, token.col + 1);
         column += strlen(token.val);
 
         LIST_PUSH(state->tokens, token);
@@ -282,6 +281,32 @@ static bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
     return true;
 }
 
+static void lexer_tokenize_appendeof(lexer_state_t* state)
+{
+    unsigned long int pos, column;
+    lexer_statesrcel_t *stacktop;
+    lexer_line_t *lastline;
+    lexer_barrier_t *lastbarrier;
+    lexer_token_t eof;
+
+    assert(state);
+    
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+    lastline = &stacktop->lines.data[stacktop->lines.size - 1];
+    lastbarrier = &lastline->barriers.data[lastline->barriers.size - 1];
+
+    pos = strlen(lastline->str);
+    column = pos - lastbarrier->position + lastbarrier->column;
+
+    eof.val = calloc(1, 1);
+    eof.type = LEXER_TOKENTYPE_EOF;
+    strcpy(eof.file, stacktop->filename);
+    eof.line = lastbarrier->line;
+    eof.col = column;
+
+    LIST_PUSH(state->tokens, eof);
+}
+
 bool lexer_tokenize(lexer_state_t* state)
 {
     int i;
@@ -291,7 +316,9 @@ bool lexer_tokenize(lexer_state_t* state)
     stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
     for(i=0; i<stacktop->lines.size; i++)
-        lexer_tokenizeline(state, i);
+        lexer_tokenize_tokenizeline(state, i);
+
+    lexer_tokenize_appendeof(state);
 
     return true;
 }

@@ -81,6 +81,9 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_POUND:
         strcpy(str, "#");
         break;
+    case LEXER_TOKENTYPE_DBLPOUND:
+        strcpy(str, "##");
+        break;
     case LEXER_TOKENTYPE_PERIOD:
         strcpy(str, ".");
         break;
