@@ -23,10 +23,12 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
 
     for(i=0, inblock=false; i<stacktop->lines.size; i++)
     {
+        curline = &LIST_FETCH(stacktop->lines, lexer_line_t, i);
         linelen = strlen(curline->str);
-        for(j=0; j<linelen; j++)
+        for(j=0; j<linelen-1; j++)
         {
             curline = &LIST_FETCH(stacktop->lines, lexer_line_t, i);
+            linelen = strlen(curline->str);
 
             if(!inblock && !strncmp(curline->str + j, "/*", 2))
             {
@@ -51,8 +53,6 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
                     continue;
                 }
 
-                printf("and here\n");
-
                 pstartline = &stacktop->lines.data[startline];
                 pendline = &stacktop->lines.data[endline];
                 pstartline->str = textutils_remove(pstartline->str, startcol, strlen(pstartline->str));
@@ -69,15 +69,8 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
                 LIST_REMOVE(stacktop->lines, endline);
 
                 for(k=startline+1; k<endline; k++)
-                {
-                    /* printf("removing line \"%s\".\n", stacktop->lines.data[startline + 1].str); */
                     LIST_REMOVE(stacktop->lines, startline + 1);
-                }
-
-                printf("and here..\n");
             }
-
-            printf("over here too\n");
         }
     }
 }

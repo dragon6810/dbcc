@@ -19,6 +19,7 @@ LIST_TYPE(srcfile_t, list_srcfile)
 struct srcfile_s
 {
     char *path, *rawtext;
+    lexer_state_t lexer;
 };
 
 bool srcfile_load(char* path, srcfile_t* srcfile);

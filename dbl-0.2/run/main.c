@@ -28,7 +28,7 @@ int main(int argc, char** argv)
      * comment
      * cool
     */ 
-   x += MY_DEFINE;
+    x += MY_DEFINE;
     c = '3';
     c = '\n';
 

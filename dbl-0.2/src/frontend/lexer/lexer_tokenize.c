@@ -272,6 +272,8 @@ static bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
         lexer_tkntypetostring(token.type, type);
         printf("token: \"%s\" (\"%s\") %s:%lu:%lu.\n", token.val, type, token.file, token.line + 1, token.col + 1);
         column += strlen(token.val);
+
+        LIST_PUSH(state->tokens, token);
     
         while(column < linelen && pline->str[column] <= 32)
             column++;
