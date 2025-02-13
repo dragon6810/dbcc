@@ -21,7 +21,8 @@ char* textutils_insert(char* str, const char* insert, int pos)
 
     memcpy(newstr, str, pos);
     memcpy(newstr + pos, insert, insertlen);
-    memcpy(newstr + pos + insertlen, str + pos, strlen(str) - pos);
+    if(pos < strlen(str))
+        memcpy(newstr + pos + insertlen, str + pos, strlen(str) - pos);
     newstr[newlen] = 0;
 
     free(str);

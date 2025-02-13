@@ -198,7 +198,7 @@ static void lexer_tokenize_errnotoken(lexer_state_t* state, unsigned long int li
     abort();
 }
 
-lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned long int line, unsigned long int column)
+static lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned long int line, unsigned long int column)
 {
     int i;
 
@@ -249,7 +249,7 @@ lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned long int l
     return token;
 }
 
-bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
+static bool lexer_tokenizeline(lexer_state_t* state, unsigned long int line)
 {
     lexer_statesrcel_t *stacktop;
     lexer_line_t *pline;

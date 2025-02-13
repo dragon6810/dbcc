@@ -6,7 +6,7 @@
 #include <cli/cli.h>
 #include <textutils/textutils.h>
 
-static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
+void lexer_initialprocessing_cullcomments(lexer_state_t* state)
 {
     int i, j, k;
     lexer_line_t *curline;
@@ -16,23 +16,24 @@ static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
     int startline, startcol;
     int endline, endcol;
     int linelen;
+    lexer_line_t *pstartline, *pendline;
     char *str;
 
     stacktop = &LIST_FETCH(state->srcstack, lexer_statesrcel_t, state->srcstack.size - 1);
 
     for(i=0, inblock=false; i<stacktop->lines.size; i++)
     {
-        curline = &LIST_FETCH(stacktop->lines, lexer_line_t, i);
         linelen = strlen(curline->str);
         for(j=0; j<linelen; j++)
         {
+            curline = &LIST_FETCH(stacktop->lines, lexer_line_t, i);
+
             if(!inblock && !strncmp(curline->str + j, "/*", 2))
             {
                 inblock = true;
                 startline = i;
                 startcol = j;
                 j++;
-                continue;
             }
 
             if(inblock && !strncmp(curline->str + j, "*/", 2))
@@ -45,17 +46,38 @@ static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
                 if(startline == endline)
                 {
                     curline->str = textutils_remove(curline->str, startcol, endcol);
+                    curline->str = textutils_insert(curline->str, " ", startcol);
+                    linelen = strlen(curline->str);
                     continue;
                 }
 
-                str = LIST_FETCH(stacktop->lines, lexer_line_t, startline).str;
-                LIST_FETCH(stacktop->lines, lexer_line_t, startline).str = textutils_remove(str, startcol, strlen(str));
-                str = LIST_FETCH(stacktop->lines, lexer_line_t, endline).str;
-                LIST_FETCH(stacktop->lines, lexer_line_t, endline).str = textutils_remove(str, 0, endcol);
+                printf("and here\n");
+
+                pstartline = &stacktop->lines.data[startline];
+                pendline = &stacktop->lines.data[endline];
+                pstartline->str = textutils_remove(pstartline->str, startcol, strlen(pstartline->str));
+                pendline->str = textutils_remove(pendline->str, 0, endcol);
+                str = malloc(strlen(pstartline->str) + 1 + strlen(pendline->str) + 1);
+                strcpy(str, pstartline->str);
+                strcat(str, " ");
+                strcat(str, pendline->str);
+                free(pstartline->str);
+                free(pendline->str);
+                pstartline->str = str;
+                puts(str);
+
+                LIST_REMOVE(stacktop->lines, endline);
 
                 for(k=startline+1; k<endline; k++)
+                {
+                    /* printf("removing line \"%s\".\n", stacktop->lines.data[startline + 1].str); */
                     LIST_REMOVE(stacktop->lines, startline + 1);
+                }
+
+                printf("and here..\n");
             }
+
+            printf("over here too\n");
         }
     }
 }
@@ -88,15 +110,17 @@ static void lexer_initialprocessing_mergelines(lexer_state_t* state)
         newstr = malloc(strlen(curline->str) - 1 + strlen(append) + 1);
         strcpy(newstr, curline->str);
         newstr[j] = 0;
+        strcat(newstr, append);
+
         barrier.line = curline->barriers.data[curline->barriers.size - 1].line + 1;
         barrier.column = append - (curline+1)->str + 1;
         barrier.position = strlen(curline->str);
         LIST_PUSH(curline->barriers, barrier);
-        strcat(newstr, append);
+
         free(curline->str);
+        free((curline+1)->str);
         curline->str = newstr;
 
-        free((curline+1)->str);
         LIST_REMOVE(stacktop->lines, i + 1);
     }
 }

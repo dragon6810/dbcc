@@ -17,7 +17,7 @@ int main(int argc, char** argv)
     /* heres a one-line comment */
 
     x = 0;
-    x += 3;
+    x +=/* com */3;
     x *= -1;
     x--;
 
@@ -27,9 +27,8 @@ int main(int argc, char** argv)
      * line
      * comment
      * cool
-    */
-
-    x += MY_DEFINE;
+    */ 
+   x += MY_DEFINE;
     c = '3';
     c = '\n';
 
