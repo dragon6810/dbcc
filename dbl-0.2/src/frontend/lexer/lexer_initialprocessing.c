@@ -82,9 +82,6 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
 
                 for(k=startline+1; k<endline+1; k++)
                     LIST_REMOVE(stacktop->lines, startline + 1);
-
-                puts(str);
-                puts((pstartline+1)->str);
             }
 
             curline = &stacktop->lines.data[i];

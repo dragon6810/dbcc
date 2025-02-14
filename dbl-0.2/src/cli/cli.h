@@ -30,6 +30,7 @@ extern list_srcfile_t cli_allunits;
 
 void cli_initialize(void);
 void cli_errornofile(const char* reason, const char* path);
+void cli_errorsyntax(const char* file, unsigned long int line, unsigned long int column, const char* format, ...);
 void cli_printwelcome(void);
 void cli_printusage(void);
 void cli_processflag(const char* flag);

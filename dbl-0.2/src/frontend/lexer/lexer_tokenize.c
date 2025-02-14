@@ -1,9 +1,10 @@
 #include <frontend/lexer/lexer.h>
 
-#include <assert/assert.h>
 #include <stdio.h>
 #include <string.h>
 
+#include <assert/assert.h>
+#include <cli/cli.h>
 #include <textutils/textutils.h>
 #include <math/math.h>
 
@@ -190,11 +191,7 @@ static void lexer_tokenize_errnotoken(lexer_state_t* state, unsigned long int li
 
     stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
-    printf("\033[0;1m%s:%lu:%lu: ", stacktop->filename, line, column);
-    printf("\033[31;1merror: ");
-    printf("\033[0;1munknown token\n");
-
-    printf("\033[0m");
+    cli_errorsyntax(stacktop->filename, line, column, "unknown token");
     abort();
 }
 
@@ -236,7 +233,7 @@ static lexer_token_t lexer_tokenize_findtoken(lexer_state_t* state, unsigned lon
     }
 
     if(!longlen)
-        lexer_tokenize_errnotoken(state, line, column);
+        lexer_tokenize_errnotoken(state, latestbarrier->line, column - latestbarrier->position + latestbarrier->column);
 
     token.val = malloc(longlen + 1);
     memcpy(token.val, linestr + column, longlen);
