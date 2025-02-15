@@ -18,14 +18,15 @@ void lexer_tknfile_callphases(lexer_state_t* state, struct srcfile_s* srcfile)
     strcpy(stackbottom.filename, srcfile->path);
     stackbottom.curline = stackbottom.curcolumn = 0;
     LIST_INITIALIZE(stackbottom.lines);
+    LIST_INITIALIZE(stackbottom.tokens);
 
-    LIST_INITIALIZE(state->tokens);
     LIST_INITIALIZE(state->srcstack);
 
     LIST_PUSH(state->srcstack, stackbottom);
 
     lexer_initialprocessing(state);
     lexer_tokenize(state);
+    lexer_preprocess(state);
 
     if(cli_verbose)
         lexer_printtokens(state);

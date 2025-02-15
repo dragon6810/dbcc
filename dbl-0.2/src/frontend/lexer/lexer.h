@@ -156,7 +156,7 @@ struct lexer_token_s
     lexer_tokentype_e type;
     
     char file[PATH_MAX];
-    unsigned long int line, col;
+    unsigned long int line, col, posline;
 };
 
 struct lexer_statesrcel_s
@@ -164,6 +164,7 @@ struct lexer_statesrcel_s
     char filename[PATH_MAX];
     unsigned long int curline, curcolumn;
     list_lexer_line_t lines;
+    list_lexer_token_t tokens;
 };
 
 struct lexer_barrier_s
@@ -180,7 +181,6 @@ struct lexer_line_s
 
 struct lexer_state_s
 {
-    list_lexer_token_t tokens;
     list_lexer_statesrcel_t srcstack;
 };
 

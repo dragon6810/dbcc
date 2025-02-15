@@ -1,4 +1,4 @@
-#include "incfile.h"
+#include "incfile.ha"
 #include "otherincfile.h"
 
 /* #include <string.h> */
@@ -25,7 +25,7 @@ int main(int argc, char** argv)
      * line
      * comment
      * cool
-    */x += MY_DEFINE;@
+    */x += MY_DEFINE;
     c = '3';
     c = '\n';
 

@@ -45,8 +45,7 @@ void cli_errorsyntax_printline(const char* file, unsigned long int line, unsigne
 
     printf("%5lu | %s\n", line + 1, str);
 
-    printf("\033[32m");
-    printf("        ");
+    printf("      | ");
     for(j=0; j<column; j++)
     {
         assert(str[j]);
@@ -58,9 +57,8 @@ void cli_errorsyntax_printline(const char* file, unsigned long int line, unsigne
 
         printf(" ");
     }
-
-    printf("^ here\n");
-    printf("\033[0m");
+    
+    printf("\033[32m^\033[0m\n");
 
     free(str);
     free(data);

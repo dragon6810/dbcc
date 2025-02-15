@@ -37,13 +37,7 @@ int main(int argc, char** argv)
     }
 
     if(cli_verbose)
-    {
         cli_printwelcome();
-
-        printf("source files:\n");
-        for(i=0; i<sourcefilenames.size; i++)
-            printf("    %s\n", sourcefilenames.data[i]);
-    }
 
     LIST_RESIZE(cli_allunits, sourcefilenames.size);
     for(i=0; i<cli_allunits.size; i++)

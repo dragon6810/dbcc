@@ -11,5 +11,5 @@ void cli_printwelcome(void)
 
     memset(equals, '=', sizeof(equals));
     equals[CLI_PRINTWELCOME_NEQUALS] = 0;
-    printf("%s Deadbird Compiler %s%d.%d %s\n", equals, CLI_VERSION_IDENT, CLI_VERSION_MAJOR, CLI_VERSION_MINOR, equals);
+    printf("\n%s Deadbird Compiler %s%d.%d %s\n\n", equals, CLI_VERSION_IDENT, CLI_VERSION_MAJOR, CLI_VERSION_MINOR, equals);
 }

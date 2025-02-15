@@ -31,10 +31,11 @@ ifneq ($(filter arm%,$(UNAME_P)),)
 	CC_FLAGS := $(CC_FLAGS) -D ARM
 endif
 
-.PHONY: all mkdirs clean preprocessed
+.PHONY: all mkdirs clean preprocessed ir
 
 all: mkdirs $(BIN_FILE)
 preprocessed: mkdirs $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.i, $(SRC_FILE))
+ir: mkdirs $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.ir, $(SRC_FILE))
 
 mkdirs:
 	@mkdir -p $(BIN_DIR)
@@ -50,6 +51,10 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 $(OBJ_DIR)/%.i: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CC_FLAGS) -E $< -o $@
+
+$(OBJ_DIR)/%.ir: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CC_FLAGS) -flto -S $< -o $@
 
 -include $(OBJ_FILE:.o=.d)
 
