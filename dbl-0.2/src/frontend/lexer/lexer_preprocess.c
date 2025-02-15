@@ -129,7 +129,7 @@ void lexer_preprocess_processinclude(lexer_state_t* state, unsigned long int ito
     LIST_POP(state->srcstack, NULL);
 }
 
-void lexer_preprocess_processstatement(lexer_state_t* state, unsigned long int itoken)
+bool lexer_preprocess_processstatement(lexer_state_t* state, unsigned long int itoken)
 {
     lexer_statesrcel_t *stacktop;
     lexer_token_t *token;
@@ -142,11 +142,12 @@ void lexer_preprocess_processstatement(lexer_state_t* state, unsigned long int i
     {
     case LEXER_TOKENTYPE_INCLUDE:
         lexer_preprocess_processinclude(state, itoken + 1);
-        break;
+        return true;
     case LEXER_TOKENTYPE_DEFINE:
-        break;
+        return false;
     default:
         lexer_preprocess_errnodirective(state, itoken + 1);
+        return false;
     }
 }
 
@@ -163,9 +164,9 @@ void lexer_preprocess_findstatements(lexer_state_t* state)
         if(stacktop->tokens.data[i].type != LEXER_TOKENTYPE_POUND)
             continue;
 
-        lexer_preprocess_processstatement(state, i);
+        if(lexer_preprocess_processstatement(state, i))
+            i--;
         stacktop = &state->srcstack.data[state->srcstack.size - 1];
-        /* i--; */
     }
 }
 

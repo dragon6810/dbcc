@@ -31,5 +31,7 @@ void list_insertlist(list_template_t* list, list_template_t* sublist, unsigned l
     memcpy(list->data + where * list->elsize, sublist->data, sublist->size * list->elsize);
     memcpy(list->data + (where + sublist->size) * list->elsize, datacpy + where * list->elsize, (list->size - where) * list->elsize);
 
+    list->size = newsize;
+
     free(datacpy);
 }
