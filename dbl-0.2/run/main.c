@@ -1,4 +1,4 @@
-#include "incfile.ha"
+#include "incfile.h"
 #include "otherincfile.h"
 
 /* #include <string.h> */

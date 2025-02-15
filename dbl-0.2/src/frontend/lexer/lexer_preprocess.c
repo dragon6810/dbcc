@@ -97,10 +97,12 @@ void lexer_preprocess_findinclude(lexer_token_t* token, char* output)
 
 void lexer_preprocess_processinclude(lexer_state_t* state, unsigned long int itoken)
 {
-    lexer_statesrcel_t *stacktop;
+    unsigned long int istacktop;
+    lexer_statesrcel_t *stacktop, newtop;
     lexer_token_t *token, *nexttoken;
     char path[FILENAME_MAX];
 
+    istacktop = state->srcstack.size - 1;
     stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
     token = &stacktop->tokens.data[itoken];
@@ -110,7 +112,21 @@ void lexer_preprocess_processinclude(lexer_state_t* state, unsigned long int ito
         lexer_preprocess_errnofilename(state, itoken);
 
     lexer_preprocess_findinclude(nexttoken, path);
-    puts(path);
+    strcpy(newtop.filename, path);
+    newtop.curline = newtop.curcolumn = 1;
+    LIST_INITIALIZE(newtop.lines);
+    LIST_INITIALIZE(newtop.tokens);
+    LIST_PUSH(state->srcstack, newtop);
+    lexer_initialprocessing(state);
+    lexer_tokenize(state);
+    LIST_POP(state->srcstack.data[state->srcstack.size-1].tokens, NULL); /* remove eof */
+
+    stacktop = &state->srcstack.data[istacktop];
+
+    LIST_REMOVERANGE(stacktop->tokens, itoken - 1, itoken + 2);
+    LIST_INSERTLIST(stacktop->tokens, state->srcstack.data[state->srcstack.size-1].tokens, itoken - 1);
+
+    LIST_POP(state->srcstack, NULL);
 }
 
 void lexer_preprocess_processstatement(lexer_state_t* state, unsigned long int itoken)
@@ -148,6 +164,8 @@ void lexer_preprocess_findstatements(lexer_state_t* state)
             continue;
 
         lexer_preprocess_processstatement(state, i);
+        stacktop = &state->srcstack.data[state->srcstack.size - 1];
+        /* i--; */
     }
 }
 

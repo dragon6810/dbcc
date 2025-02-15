@@ -25,6 +25,10 @@
 
 #define LIST_REMOVE(list, index) (list_remove((list_template_t*)&(list), (unsigned long int) index));
 
+#define LIST_REMOVERANGE(list, start, end) (list_removerange((list_template_t*)&(list), (unsigned long int) start, (unsigned long int) end))
+
+#define LIST_INSERTLIST(list, sublist, where) (list_insertlist((list_template_t*)&(list), (list_template_t*)&(sublist), (unsigned long int) where))
+
 #define LIST_FROMSPAN(new, list, start, end) (list_fromspan((list_template_t*)&(new), (list_template_t*)&(list), (unsigned long int) start, (unsigned long int) end))
 
 #define LIST_COPY(new, old) (list_copy((list_template_t*)&(new), (list_template_t*)&(old)))
@@ -66,6 +70,8 @@ void  list_resize(list_template_t* list, unsigned long int size);
 void* list_push(list_template_t* list, void* element);
 void  list_pop(list_template_t* list, void* element);
 void  list_remove(list_template_t* list, unsigned long int index);
+void  list_removerange(list_template_t* list, unsigned long int start, unsigned long int end);
+void  list_insertlist(list_template_t* list, list_template_t* sublist, unsigned long int where);
 void  list_fromspan(list_template_t* new, list_template_t* list, unsigned long int start, unsigned long int end);
 void  list_copy(list_template_t* new, list_template_t* old);
 void  list_shuffle(list_template_t* out, list_template_t* list);
