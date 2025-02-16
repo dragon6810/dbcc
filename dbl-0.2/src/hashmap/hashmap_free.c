@@ -4,11 +4,11 @@
 
 #include <assert/assert.h>
 
-void hashmap_free(hashmap_t* hashmap)
+void hashmap_free(hashmap_template_t* hashmap)
 {
     int i;
-    hashmap_bucket_t *curbucket;
-    hashmap_bucketitem_t *curitem, *nextitem;
+    hashmap_bucket_template_t *curbucket;
+    hashmap_bucketitem_template_t *curitem, *nextitem;
 
     assert(hashmap);
     assert(hashmap->buckets);
@@ -36,5 +36,5 @@ void hashmap_free(hashmap_t* hashmap)
 
     free(hashmap->buckets);
 
-    memset(hashmap, 0, sizeof(hashmap_t));
+    memset(hashmap, 0, sizeof(hashmap_template_t));
 }

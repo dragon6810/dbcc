@@ -24,6 +24,8 @@ void lexer_tknfile_callphases(lexer_state_t* state, struct srcfile_s* srcfile)
 
     LIST_PUSH(state->srcstack, stackbottom);
 
+    HASHMAP_INITIALIZE(state->defines, HASHMAP_BUCKETS_MEDIUM, string_lexer_define);
+
     lexer_initialprocessing(state);
     lexer_tokenize(state);
     lexer_preprocess(state);

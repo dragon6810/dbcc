@@ -3,12 +3,12 @@
 #include <assert/assert.h>
 #include <stdio.h>
 
-void* hashmap_fetch(hashmap_t* hashmap, void* key)
+void* hashmap_fetch(hashmap_template_t* hashmap, void* key)
 {
-    hashmap_bucketitem_t *curitem;
+    hashmap_bucketitem_template_t *curitem;
 
     unsigned long int hash, index;
-    hashmap_bucket_t *bucket;
+    hashmap_bucket_template_t *bucket;
 
     assert(hashmap);
     assert(key);

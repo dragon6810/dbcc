@@ -4,11 +4,11 @@
 
 #include <assert/assert.h>
 
-void* hashmap_set(hashmap_t* hashmap, void* key, void* val)
+void* hashmap_set(hashmap_template_t* hashmap, void* key, void* val)
 {
     unsigned long int hash, index;
-    hashmap_bucket_t *bucket;
-    hashmap_bucketitem_t *item;
+    hashmap_bucket_template_t *bucket;
+    hashmap_bucketitem_template_t *item;
 
     assert(hashmap);
     assert(hashmap->buckets);
@@ -22,7 +22,7 @@ void* hashmap_set(hashmap_t* hashmap, void* key, void* val)
     
     if(!bucket->items)
     {
-        item = calloc(1, sizeof(hashmap_bucketitem_t));
+        item = calloc(1, sizeof(hashmap_bucketitem_template_t));
         bucket->items = item;
     }
     else
@@ -38,7 +38,7 @@ void* hashmap_set(hashmap_t* hashmap, void* key, void* val)
 
         if(item->hash != hash || !hashmap->cmp(item->key, key))
         {
-            item->next = calloc(1, sizeof(hashmap_bucketitem_t));
+            item->next = calloc(1, sizeof(hashmap_bucketitem_template_t));
             item = item->next;
         }
     }

@@ -46,6 +46,15 @@ void lexer_preprocess_errnodirective(lexer_state_t* state, unsigned long int ito
     abort();
 }
 
+void lexer_preprocess_processdefine(lexer_state_t* state, unsigned long int itoken)
+{
+    lexer_statesrcel_t *stacktop;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    LIST_REMOVERANGE(stacktop->tokens, itoken - 1, itoken + 2);
+}
+
 void lexer_preprocess_findinclude(lexer_token_t* token, char* output)
 {
     int i;
@@ -144,7 +153,8 @@ bool lexer_preprocess_processstatement(lexer_state_t* state, unsigned long int i
         lexer_preprocess_processinclude(state, itoken + 1);
         return true;
     case LEXER_TOKENTYPE_DEFINE:
-        return false;
+        lexer_preprocess_processdefine(state, itoken + 1);
+        return true;
     default:
         lexer_preprocess_errnodirective(state, itoken + 1);
         return false;

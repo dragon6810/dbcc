@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <limits.h>
 
+#include <frontend/lexer/hashmap/hashmap_lexer.h>
 #include <list/list.h>
 
 #define LEXER_MAXHARDTOKENLEN 64
@@ -37,12 +38,20 @@ typedef struct lexer_state_s lexer_state_t;
 typedef struct lexer_statesrcel_s lexer_statesrcel_t;
 typedef struct lexer_barrier_s lexer_barrier_t;
 typedef struct lexer_line_s lexer_line_t;
+typedef struct lexer_define_s lexer_define_t;
 
 LIST_TYPE(lexer_line_t, list_lexer_line)
 LIST_TYPE(lexer_barrier_t, list_lexer_barrier)
 LIST_TYPE(lexer_token_t, list_lexer_token)
 LIST_TYPE(lexer_statesrcel_t, list_lexer_statesrcel)
 LIST_TYPE(lexer_state_t, list_lexer_state)
+
+HASHMAP_TYPE_DECL
+(
+    char*, 
+    lexer_define_t,
+    string_lexer_define
+)
 
 typedef enum
 {
@@ -181,7 +190,13 @@ struct lexer_line_s
 
 struct lexer_state_s
 {
+    hashmap_string_lexer_define_t defines;
     list_lexer_statesrcel_t srcstack;
+};
+
+struct lexer_define_s
+{
+
 };
 
 /*
