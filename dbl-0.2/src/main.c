@@ -4,10 +4,10 @@
 #include <string.h>
 
 #include <cli/cli.h>
-#include <hashmap/hashmap.h>
-#include <hashmap/int32/int32.h>
-#include <hashmap/string/string.h>
-#include <list/list.h>
+#include <std/hashmap/hashmap.h>
+#include <std/hashmap/int32/int32.h>
+#include <std/hashmap/string/string.h>
+#include <std/list/list.h>
 #include <srcfile/srcfile.h>
 
 int main(int argc, char** argv)

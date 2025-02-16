@@ -6,7 +6,7 @@
 #include <assert/assert.h>
 #include <cli/cli.h>
 #include <textutils/textutils.h>
-#include <math/math.h>
+#include <std/math/math.h>
 
 static bool lexer_tokenize_ischarallowedinconstant(char c, bool hex)
 {

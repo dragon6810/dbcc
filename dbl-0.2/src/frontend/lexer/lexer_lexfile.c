@@ -6,8 +6,8 @@
 
 #include <assert/assert.h>
 #include <cli/cli.h>
-#include <list/list.h>
-#include <math/math.h>
+#include <std/list/list.h>
+#include <std/math/math.h>
 #include <srcfile/srcfile.h>
 
 void lexer_tknfile_callphases(lexer_state_t* state, struct srcfile_s* srcfile)

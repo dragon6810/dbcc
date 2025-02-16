@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-#include <list/list.h>
-#include <list/list_types.h>
+#include <std/list/list.h>
+#include <std/list/list_types.h>
 
 #include <srcfile/srcfile.h>
 

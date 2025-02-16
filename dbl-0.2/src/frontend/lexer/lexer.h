@@ -5,7 +5,7 @@
 #include <limits.h>
 
 #include <frontend/lexer/hashmap/hashmap_lexer.h>
-#include <list/list.h>
+#include <std/list/list.h>
 
 #define LEXER_MAXHARDTOKENLEN 64
 #define LEXER_TOKENTYPE_STARTOFENUM LEXER_TOKENTYPE_EOF
@@ -196,7 +196,8 @@ struct lexer_state_s
 
 struct lexer_define_s
 {
-
+    char *name;
+    list_lexer_token_t tokens;
 };
 
 /*
