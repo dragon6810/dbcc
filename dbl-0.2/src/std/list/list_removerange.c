@@ -7,30 +7,28 @@
 
 void list_removerange(list_template_t* list, unsigned long int start, unsigned long int end)
 {
-    void *firstchunk, *lastchunk, *lastcopy;
+    void *listcopy;
 
     assert(list);
     assert(start < list->size);
     assert(end <= list->size);
     assert(start < end);
 
-    firstchunk = list->data;
-    lastchunk = list->data + end * list->elsize;
-    lastcopy = malloc((list->size - end) * list->elsize);
-    memcpy(lastcopy, lastchunk, (list->size - end) * list->elsize);
+    listcopy = malloc(list->size * list->elsize);
+    memcpy(listcopy, list->data, list->size * list->elsize);
 
     list->size -= end - start;
-    if(list->buffsize >> 1 >= list->size * list->elsize)
+    if(list->buffsize >> 1 > list->size * list->elsize)
     {
-        while(list->buffsize >> 1 >= list->size * list->elsize)
+        while(list->buffsize >> 1 > list->size * list->elsize)
             list->buffsize >>= 1;
 
         free(list->data);
         list->data = malloc(list->buffsize);
     }
 
-    memcpy(list->data, firstchunk, start * list->elsize);
-    memcpy(list->data + start * list->elsize, lastcopy, (list->size - start) * list->elsize);
+    memcpy(list->data, listcopy, start * list->elsize);
+    memcpy(list->data + start * list->elsize, listcopy + end * list->elsize, (list->size - start) * list->elsize);
 
-    free(lastcopy);
+    free(listcopy);
 }

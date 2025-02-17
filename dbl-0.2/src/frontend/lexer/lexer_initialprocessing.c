@@ -9,7 +9,7 @@
 
 void lexer_initialprocessing_cullcomments(lexer_state_t* state)
 {
-    int i, j, k;
+    int i, j;
     lexer_line_t *curline;
 
     lexer_statesrcel_t *stacktop;
@@ -27,6 +27,7 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
     {
         curline = &stacktop->lines.data[i];
         linelen = strlen(curline->str);
+
         for(j=0; j<linelen-1; j++)
         {
             if(!inblock && !strncmp(curline->str + j, "/*", 2))
@@ -34,7 +35,6 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
                 inblock = true;
                 startline = i;
                 startcol = j;
-                j++;
             }
 
             if(inblock && !strncmp(curline->str + j, "*/", 2))
@@ -42,8 +42,7 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
                 inblock = false;
                 endline = i;
                 endcol = j + 2;
-                j++;
-
+                
                 latestbarrier = curline->barriers.data;
                 while((latestbarrier - curline->barriers.data) < curline->barriers.size - 1 && latestbarrier->position < endcol)
                     latestbarrier++;
@@ -68,7 +67,7 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
                 pstartline = &stacktop->lines.data[startline];
                 pendline = &stacktop->lines.data[endline];
                 pstartline->str = textutils_remove(pstartline->str, startcol, strlen(pstartline->str));
-                newbarr.position = strlen(pstartline->str + 1);
+                newbarr.position = strlen(pstartline->str) + 1;
                 pendline->str = textutils_remove(pendline->str, 0, endcol);
                 str = malloc(strlen(pstartline->str) + 1 + strlen(pendline->str) + 1);
                 strcpy(str, pstartline->str);
@@ -78,11 +77,11 @@ void lexer_initialprocessing_cullcomments(lexer_state_t* state)
                 free(pendline->str);
                 pstartline->str = str;
 
-                newbarr.position += 2; /* dont ask me why */
                 LIST_PUSH(pstartline->barriers, newbarr);
 
-                for(k=startline+1; k<endline+1; k++)
-                    LIST_REMOVE(stacktop->lines, startline + 1);
+                LIST_REMOVERANGE(stacktop->lines, startline + 1, endline + 1);
+
+                i -= endline - startline;
             }
 
             curline = &stacktop->lines.data[i];

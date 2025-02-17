@@ -150,6 +150,7 @@ void lexer_preprocess_findinclude(lexer_token_t* token, char* output)
         strcpy(curpath, cli_includedirs.data[i]);
         if(curpath[strlen(curpath) - 1] != '/')
             strcat(curpath, "/");
+
         strcat(curpath, path);
 
         if(access(curpath, F_OK))
