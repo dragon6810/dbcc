@@ -5,7 +5,7 @@
 HASHMAP_TYPE_DEF
 (
     hashmap_string_hash,
-    hashmap_lexer_define_cmp,
+    hashmap_string_cmp,
     hashmap_string_free,
     hashmap_lexer_define_free,
     hashmap_string_copy,

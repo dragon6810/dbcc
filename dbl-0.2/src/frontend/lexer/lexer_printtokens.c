@@ -1,6 +1,6 @@
 #include <frontend/lexer/lexer.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 void lexer_printtokens(lexer_state_t* state)
 {

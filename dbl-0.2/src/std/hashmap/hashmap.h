@@ -48,28 +48,36 @@ extern void (*hashmap_type_##name##_valfree)(void*);           \
 extern void (*hashmap_type_##name##_keycopy)(void*, void*);    \
 extern void (*hashmap_type_##name##_valcopy)(void*, void*);    
 
-#define HASHMAP_TYPE_DEF(keyhash, valcmp, keyfree, valfree, keycopy, valcopy, name) \
+#define HASHMAP_TYPE_DEF(keyhash, keycmp, keyfree, valfree, keycopy, valcopy, name) \
 unsigned long int (*hashmap_type_##name##_hash)(void*) = keyhash; \
-bool (*hashmap_type_##name##_cmp)(void*, void*) = valcmp;         \
+bool (*hashmap_type_##name##_cmp)(void*, void*) = keycmp;         \
 void (*hashmap_type_##name##_keyfree)(void*) = keyfree;           \
 void (*hashmap_type_##name##_valfree)(void*) = valfree;           \
 void (*hashmap_type_##name##_keycopy)(void*, void*) = keycopy;    \
 void (*hashmap_type_##name##_valcopy)(void*, void*) = valcopy;   
 
-#define HASHMAP_INITIALIZE(hashmap, nbuckets, type)   \
-hashmap_initialize                                    \
-(                                                     \
-    (hashmap_template_t*)&(hashmap),                  \
-    hashmap_type_##type##_hash,                       \
-    hashmap_type_##type##_cmp,                        \
-    nbuckets,                                         \
-    sizeof(((hashmap_bucketitem_##type##_t*)0)->key), \
-    sizeof(((hashmap_bucketitem_##type##_t*)0)->val), \
-    hashmap_type_##type##_keyfree,                    \
-    hashmap_type_##type##_valfree,                    \
-    hashmap_type_##type##_keycopy,                    \
-    hashmap_type_##type##_valcopy                     \
+#define HASHMAP_INITIALIZE(hashmap, nbuckets, type)    \
+hashmap_initialize                                     \
+(                                                      \
+    (hashmap_template_t*)&(hashmap),                   \
+    hashmap_type_##type##_hash,                        \
+    hashmap_type_##type##_cmp,                         \
+    nbuckets,                                          \
+    sizeof(*((hashmap_bucketitem_##type##_t*)0)->key), \
+    sizeof(*((hashmap_bucketitem_##type##_t*)0)->val), \
+    hashmap_type_##type##_keyfree,                     \
+    hashmap_type_##type##_valfree,                     \
+    hashmap_type_##type##_keycopy,                     \
+    hashmap_type_##type##_valcopy                      \
 )
+
+#define HASHMAP_FETCH(hashmap, key) hashmap_fetch((hashmap_template_t*)&(hashmap), (void*)&(key))
+
+#define HASHMAP_SET(hashmap, key, val) hashmap_set((hashmap_template_t*)&(hashmap), (void*)&(key), (void*)&(val))
+
+#define HASHMAP_REMOVE(hashmap, key) hashmap_remove((hashmap_template_t*)&(hashmap), (void*)&(key))
+
+#define HASHMAP_FREE(hashmap) hashmap_free((hashmap_template_t*)&(hashmap))
 
 /*
  * ================================
@@ -116,7 +124,7 @@ struct hashmap_bucketitem_template_s
 void hashmap_initialize(hashmap_template_t* hashmap, unsigned long int (*hash)(void*),  bool (*cmp)(void*, void*), unsigned long int nbuckets, unsigned long int keysize, unsigned long int valsize, void (*freekey)(void*), void (*freeval)(void*), void  (*copykey)(void*, void*), void  (*copyval)(void*, void*));
 void* hashmap_fetch(hashmap_template_t* hashmap, void* key);
 void* hashmap_set(hashmap_template_t* hashmap, void* key, void* val);
-void hashmap_remove(hashmap_template_t* hashmap, void* key);
+bool hashmap_remove(hashmap_template_t* hashmap, void* key);
 void hashmap_free(hashmap_template_t* hashmap);
 
 #endif

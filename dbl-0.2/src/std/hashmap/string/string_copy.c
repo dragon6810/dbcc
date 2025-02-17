@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 void hashmap_string_copy(void* dst, void* src)
 {

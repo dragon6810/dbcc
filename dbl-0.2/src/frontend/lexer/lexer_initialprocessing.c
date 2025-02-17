@@ -2,8 +2,9 @@
 
 #include <string.h>
 
-#include <assert/assert.h>
 #include <cli/cli.h>
+#include <std/assert/assert.h>
+#include <std/profiler/profiler.h>
 #include <textutils/textutils.h>
 
 void lexer_initialprocessing_cullcomments(lexer_state_t* state)
@@ -187,9 +188,13 @@ bool lexer_initialprocessing(lexer_state_t* state)
 {
     assert(state);
 
+    profiler_push("Lex File: Initial Processing");
+
     lexer_initialprocessing_splitlines(state);
     lexer_initialprocessing_mergelines(state);
     lexer_initialprocessing_cullcomments(state);
+
+    profiler_pop();
 
     return true;
 }

@@ -4,17 +4,22 @@
 #include <string.h>
 
 #include <cli/cli.h>
+#include <srcfile/srcfile.h>
 #include <std/hashmap/hashmap.h>
 #include <std/hashmap/int32/int32.h>
 #include <std/hashmap/string/string.h>
 #include <std/list/list.h>
-#include <srcfile/srcfile.h>
+#include <std/profiler/profiler.h>
 
 int main(int argc, char** argv)
 {
     int i;
 
     list_str_t sourcefilenames;
+
+    profiler_setup();
+
+    profiler_push("Compile");
 
     cli_initialize();
 
@@ -56,6 +61,8 @@ int main(int argc, char** argv)
     
     LIST_FREE(cli_allunits);
     LIST_FREE(sourcefilenames);
+
+    profiler_pop();
     
     return 0;
 }

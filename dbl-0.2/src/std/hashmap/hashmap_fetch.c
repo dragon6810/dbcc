@@ -1,6 +1,6 @@
 #include <std/hashmap/hashmap.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 #include <stdio.h>
 
 void* hashmap_fetch(hashmap_template_t* hashmap, void* key)

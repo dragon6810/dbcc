@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 
 void hashmap_initialize(hashmap_template_t* hashmap, unsigned long int (*hash)(void*),  bool (*cmp)(void*, void*), unsigned long int nbuckets, unsigned long int keysize, unsigned long int valsize, void (*freekey)(void*), void (*freeval)(void*), void  (*copykey)(void*, void*), void  (*copyval)(void*, void*))

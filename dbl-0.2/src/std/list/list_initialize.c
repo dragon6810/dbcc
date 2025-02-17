@@ -1,6 +1,6 @@
 #include <std/list/list.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 #include <string.h>
 
 void list_initialize(list_template_t* list, unsigned long int elsize)

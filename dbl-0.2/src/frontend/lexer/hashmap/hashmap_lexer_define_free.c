@@ -1,6 +1,6 @@
 #include <frontend/lexer/lexer.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 void hashmap_lexer_define_free(void* p)
 {

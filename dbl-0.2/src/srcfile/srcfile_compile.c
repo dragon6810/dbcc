@@ -1,6 +1,6 @@
 #include <srcfile/srcfile.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 bool srcfile_compile(srcfile_t* srcfile)
 {

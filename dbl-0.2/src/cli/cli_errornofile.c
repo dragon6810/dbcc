@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 void cli_errornofile(const char* reason, const char* path)
 {

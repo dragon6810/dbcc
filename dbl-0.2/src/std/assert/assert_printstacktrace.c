@@ -1,6 +1,6 @@
 #ifdef DEBUG
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 #include <execinfo.h>
 #include <unistd.h>

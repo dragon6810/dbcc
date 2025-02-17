@@ -1,6 +1,6 @@
 #include <std/random/random.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 #include <stdlib.h>
 
 int random_int(int min, int max)

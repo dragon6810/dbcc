@@ -4,11 +4,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <assert/assert.h>
 #include <cli/cli.h>
+#include <srcfile/srcfile.h>
+#include <std/assert/assert.h>
 #include <std/list/list.h>
 #include <std/math/math.h>
-#include <srcfile/srcfile.h>
+#include <std/profiler/profiler.h>
 
 void lexer_tknfile_callphases(lexer_state_t* state, struct srcfile_s* srcfile)
 {
@@ -40,7 +41,11 @@ bool lexer_lexfile(struct srcfile_s* srcfile)
     assert(srcfile->path);
     assert(srcfile->rawtext);
 
+    profiler_push("Lex File");
+
     lexer_tknfile_callphases(&srcfile->lexer, srcfile);
+
+    profiler_pop();
 
     return true;
 }

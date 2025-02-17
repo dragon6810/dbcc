@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 void list_insertlist(list_template_t* list, list_template_t* sublist, unsigned long int where)
 {
@@ -13,13 +13,17 @@ void list_insertlist(list_template_t* list, list_template_t* sublist, unsigned l
     assert(sublist);
     assert(list != sublist);
     assert(list->elsize == sublist->elsize);
+    assert(where <= list->size);
 
     datacpy = malloc(list->size * list->elsize);
     memcpy(datacpy, list->data, list->size * list->elsize);
 
     newsize = list->size + sublist->size;
-    if(list->buffsize < newsize * list->elsize)
+    if(list->buffsize < newsize * list->elsize || list->buffsize == 0)
     {
+        if(list->buffsize == 0)
+            list->buffsize = 1;
+
         while(list->buffsize < newsize * list->elsize)
             list->buffsize <<= 1;
 

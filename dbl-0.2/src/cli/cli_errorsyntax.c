@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 void cli_errorsyntax_printline(const char* file, unsigned long int line, unsigned long int column)
 {

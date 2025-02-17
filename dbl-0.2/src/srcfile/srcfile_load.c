@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 bool srcfile_load(char* path, srcfile_t* srcfile)
 {

@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 void* hashmap_set(hashmap_template_t* hashmap, void* key, void* val)
 {
@@ -54,7 +54,11 @@ void* hashmap_set(hashmap_template_t* hashmap, void* key, void* val)
     }
 
     if(item->val)
+    {
+        if(hashmap->freeval)
+            hashmap->freeval(item->val);
         free(item->val);
+    }
     item->val = malloc(hashmap->valsize);
     if(hashmap->copyval)
         hashmap->copyval(item->val, val);

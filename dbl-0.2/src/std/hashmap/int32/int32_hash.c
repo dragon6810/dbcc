@@ -1,6 +1,6 @@
 #include <std/hashmap/hashmap.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 unsigned long int hashmap_int32_hash(void* data)
 {

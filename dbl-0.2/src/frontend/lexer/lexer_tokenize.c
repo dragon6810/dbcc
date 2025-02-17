@@ -3,10 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <assert/assert.h>
 #include <cli/cli.h>
-#include <textutils/textutils.h>
+#include <std/assert/assert.h>
 #include <std/math/math.h>
+#include <std/profiler/profiler.h>
+#include <textutils/textutils.h>
 
 static bool lexer_tokenize_ischarallowedinconstant(char c, bool hex)
 {
@@ -312,12 +313,16 @@ bool lexer_tokenize(lexer_state_t* state)
 
     lexer_statesrcel_t *stacktop;
 
+    profiler_push("Lex File: Tokenize");
+
     stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
     for(i=0; i<stacktop->lines.size; i++)
         lexer_tokenize_tokenizeline(state, i);
 
     lexer_tokenize_appendeof(state);
+
+    profiler_pop();
 
     return true;
 }

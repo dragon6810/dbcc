@@ -4,8 +4,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <assert/assert.h>
 #include <cli/cli.h>
+#include <std/assert/assert.h>
+#include <std/math/math.h>
+#include <std/profiler/profiler.h>
 
 void lexer_preprocess_errnofile(lexer_token_t* token)
 {
@@ -46,13 +48,69 @@ void lexer_preprocess_errnodirective(lexer_state_t* state, unsigned long int ito
     abort();
 }
 
+bool lexer_preprocess_tryreplacedefine(lexer_state_t* state, unsigned long int itoken)
+{
+    unsigned long int i;
+
+    lexer_statesrcel_t *stacktop;
+    lexer_token_t *token;
+    lexer_define_t *define;
+    list_lexer_token_t newtokens;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+    token = &stacktop->tokens.data[itoken];
+
+    if(!MATH_INRANGE(token->type, LEXER_TOKENTYPE_STARTOFKEYWORDS, LEXER_TOKENTYPE_ENDOFKEYWORDS) && token->type != LEXER_TOKENTYPE_IDENTIFIER)
+        return false;
+
+    define = HASHMAP_FETCH(state->defines, token->val);
+    if(!define)
+        return false;
+
+    LIST_INITIALIZE(newtokens);
+    LIST_RESIZE(newtokens, define->tokens.size);
+    for(i=0; i<newtokens.size; i++)
+    {
+        memcpy(&newtokens.data[i], &define->tokens.data[i], sizeof(lexer_token_t));
+        newtokens.data[i].val = strdup(newtokens.data[i].val);
+        newtokens.data[i].line = stacktop->tokens.data[itoken].line;
+        newtokens.data[i].col = stacktop->tokens.data[itoken].col;
+        newtokens.data[i].posline = stacktop->tokens.data[itoken].posline;
+    }
+
+    free(stacktop->tokens.data[itoken].val);
+    LIST_REMOVE(stacktop->tokens, itoken);
+    LIST_INSERTLIST(stacktop->tokens, newtokens, itoken);
+
+    LIST_FREE(newtokens);
+
+    return true;
+}
+
 void lexer_preprocess_processdefine(lexer_state_t* state, unsigned long int itoken)
 {
+    unsigned long int i;
+
     lexer_statesrcel_t *stacktop;
+    unsigned long int lasttoken;
+    lexer_define_t define;
 
     stacktop = &state->srcstack.data[state->srcstack.size - 1];
 
-    LIST_REMOVERANGE(stacktop->tokens, itoken - 1, itoken + 2);
+    for(lasttoken=itoken; stacktop->tokens.data[itoken].posline == stacktop->tokens.data[lasttoken].posline; lasttoken++);
+
+    define.name = strdup(stacktop->tokens.data[itoken].val);
+    LIST_INITIALIZE(define.tokens);
+    LIST_RESIZE(define.tokens, lasttoken-(itoken+2));
+    for(i=itoken+2; i<lasttoken; i++)
+    {
+        memcpy(&define.tokens.data[i-(itoken+2)], &stacktop->tokens.data[i], sizeof(lexer_token_t));
+        define.tokens.data[i-(itoken+2)].val = strdup(define.tokens.data[i-(itoken+2)].val);
+    }
+
+    HASHMAP_SET(state->defines, stacktop->tokens.data[itoken+1].val, define);
+
+    LIST_REMOVERANGE(stacktop->tokens, itoken - 1, lasttoken);
 }
 
 void lexer_preprocess_findinclude(lexer_token_t* token, char* output)
@@ -172,7 +230,12 @@ void lexer_preprocess_findstatements(lexer_state_t* state)
     for(i=0; i<stacktop->tokens.size; i++)
     {
         if(stacktop->tokens.data[i].type != LEXER_TOKENTYPE_POUND)
+        {
+            if(lexer_preprocess_tryreplacedefine(state, i))
+                i--;
+
             continue;
+        }
 
         if(lexer_preprocess_processstatement(state, i))
             i--;
@@ -182,7 +245,11 @@ void lexer_preprocess_findstatements(lexer_state_t* state)
 
 bool lexer_preprocess(lexer_state_t* state)
 {
+    profiler_push("Lex File: Preprocessing");
+
     lexer_preprocess_findstatements(state);
+
+    profiler_pop();
 
     return true;
 }

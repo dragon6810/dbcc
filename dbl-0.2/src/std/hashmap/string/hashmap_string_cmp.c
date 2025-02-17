@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 bool hashmap_string_cmp(void* a, void* b)
 {
