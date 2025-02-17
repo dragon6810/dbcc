@@ -1,7 +1,7 @@
 #include "incfile.h"
 #include "otherincfile.h"
 
-#include <string.h>
+/* #include <string.h> */
 
 #define MY_DEFINE (6 + 13)
 
@@ -11,6 +11,10 @@ int main(int argc, char** argv)
     char c;
     char *str = "my string \
                  is cool.";
+
+    #ifdef MY_DEFINE
+        int mydefineisdefined;
+    #endif
 
     x = 1;
 
