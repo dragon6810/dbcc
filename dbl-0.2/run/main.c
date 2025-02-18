@@ -12,7 +12,7 @@ int main(int argc, char** argv)
     char *str = "my string \
                  is cool.";
 
-    #ifdef MY_DEFINE
+    #ifndef MY_DEFINE
         int mydefineisdefined;
     #endif
 

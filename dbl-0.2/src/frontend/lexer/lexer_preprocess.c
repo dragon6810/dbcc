@@ -142,6 +142,31 @@ void lexer_preprocess_includeconditional(lexer_state_t* state, unsigned long int
     LIST_REMOVERANGE(stacktop->tokens, begin, end);
 }
 
+void lexer_preprocess_processifndef(lexer_state_t* state, unsigned long int itoken)
+{
+    lexer_statesrcel_t *stacktop;
+    lexer_token_t *token, *next;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    token = &stacktop->tokens.data[itoken];
+    next = &stacktop->tokens.data[itoken+1];
+
+    if(next->type != LEXER_TOKENTYPE_IDENTIFIER && !MATH_INRANGE(next->type, LEXER_TOKENTYPE_STARTOFKEYWORDS, LEXER_TOKENTYPE_ENDOFKEYWORDS))
+        lexer_preprocess_errmacroident(state, itoken + 1);
+
+    if(token->posline != next->posline)
+        lexer_preprocess_errnomacro(state, itoken);
+
+    if(next->posline == (next+1)->posline)
+        lexer_preprocess_errdirectiveextratokens(state, itoken+2, "#ifdef");
+
+    if(HASHMAP_FETCH(state->defines, next->val))
+        lexer_preprocess_excludeconditional(state, itoken);
+    else
+        lexer_preprocess_includeconditional(state, itoken);
+}
+
 void lexer_preprocess_processifdef(lexer_state_t* state, unsigned long int itoken)
 {
     lexer_statesrcel_t *stacktop;
@@ -335,6 +360,9 @@ bool lexer_preprocess_processstatement(lexer_state_t* state, unsigned long int i
         return true;
     case LEXER_TOKENTYPE_IFDEF:
         lexer_preprocess_processifdef(state, itoken + 1);
+        return true;
+    case LEXER_TOKENTYPE_IFNDEF:
+        lexer_preprocess_processifndef(state, itoken + 1);
         return true;
     default:
         lexer_preprocess_errnodirective(state, itoken + 1);
