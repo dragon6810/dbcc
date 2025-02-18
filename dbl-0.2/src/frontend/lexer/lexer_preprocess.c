@@ -161,7 +161,10 @@ void lexer_preprocess_processifdef(lexer_state_t* state, unsigned long int itoke
     if(next->posline == (next+1)->posline)
         lexer_preprocess_errdirectiveextratokens(state, itoken+2, "#ifdef");
 
-    lexer_preprocess_excludeconditional(state, itoken);
+    if(HASHMAP_FETCH(state->defines, next->val))
+        lexer_preprocess_includeconditional(state, itoken);
+    else
+        lexer_preprocess_excludeconditional(state, itoken);
 }
 
 bool lexer_preprocess_tryreplacedefine(lexer_state_t* state, unsigned long int itoken)
