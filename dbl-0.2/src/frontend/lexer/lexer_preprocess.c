@@ -123,6 +123,8 @@ bool lexer_preprocess_istokenconditionalstart(lexer_state_t* state, unsigned lon
 
 void lexer_preprocess_excludeconditional(lexer_state_t* state, unsigned long int itoken)
 {
+    int i;
+
     lexer_statesrcel_t *stacktop;
     unsigned long int depth, begin, end;
 
@@ -146,11 +148,15 @@ void lexer_preprocess_excludeconditional(lexer_state_t* state, unsigned long int
     if(depth)
         lexer_preprocess_errunterminatedcond(state, itoken);
 
+    for(i=begin; i<end; i++)
+        free(stacktop->tokens.data[i].val);
     LIST_REMOVERANGE(stacktop->tokens, begin, end);
 }
 
 void lexer_preprocess_includeconditional(lexer_state_t* state, unsigned long int itoken)
 {
+    int i;
+
     lexer_statesrcel_t *stacktop;
     unsigned long int depth, begin, end;
 
@@ -174,12 +180,16 @@ void lexer_preprocess_includeconditional(lexer_state_t* state, unsigned long int
     if(depth)
         lexer_preprocess_errunterminatedcond(state, itoken);
 
+    for(i=end-2; i<end; i++)
+        free(stacktop->tokens.data[i].val);
     LIST_REMOVERANGE(stacktop->tokens, end - 2, end);
 
     end = begin;
     while(stacktop->tokens.data[end].type != LEXER_TOKENTYPE_EOF && stacktop->tokens.data[end].posline == stacktop->tokens.data[begin].posline)
         end++;
 
+    for(i=begin; i<end; i++)
+        free(stacktop->tokens.data[i].val);
     LIST_REMOVERANGE(stacktop->tokens, begin, end);
 }
 
@@ -295,6 +305,8 @@ void lexer_preprocess_processdefine(lexer_state_t* state, unsigned long int itok
 
     HASHMAP_SET(state->defines, stacktop->tokens.data[itoken+1].val, define);
 
+    for(i=itoken-1; i<lasttoken; i++)
+        free(stacktop->tokens.data[i].val);
     LIST_REMOVERANGE(stacktop->tokens, itoken - 1, lasttoken);
 }
 
@@ -350,6 +362,8 @@ void lexer_preprocess_findinclude(lexer_token_t* token, char* output)
 
 void lexer_preprocess_processinclude(lexer_state_t* state, unsigned long int itoken)
 {
+    int i;
+
     unsigned long int istacktop;
     lexer_statesrcel_t *stacktop, newtop;
     lexer_token_t *token, *nexttoken;
@@ -376,6 +390,8 @@ void lexer_preprocess_processinclude(lexer_state_t* state, unsigned long int ito
 
     stacktop = &state->srcstack.data[istacktop];
 
+    for(i=itoken-1; i<itoken+2; i++)
+        free(stacktop->tokens.data[i].val);
     LIST_REMOVERANGE(stacktop->tokens, itoken - 1, itoken + 2);
     LIST_INSERTLIST(stacktop->tokens, state->srcstack.data[state->srcstack.size-1].tokens, itoken - 1);
 
