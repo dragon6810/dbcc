@@ -13,6 +13,9 @@ int main(int argc, char** argv)
                  is cool.";
 
     #ifndef MY_DEFINE
+        #ifdef OTHER_DEFINE
+            int thisshouldnthappen;
+        #endif
         int mydefineisdefined;
     #endif
 

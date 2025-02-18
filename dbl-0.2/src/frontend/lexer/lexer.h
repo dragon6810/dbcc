@@ -68,6 +68,9 @@ typedef enum
 
     /* EOF */
     LEXER_TOKENTYPE_EOF,
+
+    /* OTHER */
+    LEXER_TOKENTYPE_OTHER,
     
     /* Puncuation */
     LEXER_TOKENTYPE_OPENBRACKET,  /* [   */

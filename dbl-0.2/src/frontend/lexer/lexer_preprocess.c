@@ -87,6 +87,40 @@ void lexer_preprocess_errdirectiveextratokens(lexer_state_t* state, unsigned lon
     abort();
 }
 
+void lexer_preprocess_errunterminatedcond(lexer_state_t* state, unsigned long int itoken)
+{
+    lexer_statesrcel_t *stacktop;
+    lexer_token_t *token;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    token = &stacktop->tokens.data[itoken];
+
+    cli_errorsyntax(token->file, token->line, token->col, "unterminated conditional directive");
+    abort();
+}
+
+bool lexer_preprocess_istokenconditionalstart(lexer_state_t* state, unsigned long int itoken)
+{
+    lexer_statesrcel_t *stacktop;
+    lexer_token_t *token;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    token = &stacktop->tokens.data[itoken];
+
+    if((token-1)->type != LEXER_TOKENTYPE_POUND)
+        return false;
+
+    if(token->type == LEXER_TOKENTYPE_IF)
+        return true;
+
+    if(MATH_INRANGE(token->type, LEXER_TOKENTYPE_STARTOFPREPROCCOND, LEXER_TOKENTYPE_ENDOFPREPROCCOND))
+        return true;
+
+    return false;
+}
+
 void lexer_preprocess_excludeconditional(lexer_state_t* state, unsigned long int itoken)
 {
     lexer_statesrcel_t *stacktop;
@@ -103,11 +137,14 @@ void lexer_preprocess_excludeconditional(lexer_state_t* state, unsigned long int
         if(stacktop->tokens.data[end].type == LEXER_TOKENTYPE_ENDIF)
             depth--;
 
-        if(MATH_INRANGE(stacktop->tokens.data[end].type, LEXER_TOKENTYPE_STARTOFPREPROCCOND, LEXER_TOKENTYPE_ENDOFPREPROCCOND))
+        if(lexer_preprocess_istokenconditionalstart(state, end))
             depth++;
 
         end++;
     }
+
+    if(depth)
+        lexer_preprocess_errunterminatedcond(state, itoken);
 
     LIST_REMOVERANGE(stacktop->tokens, begin, end);
 }
@@ -128,11 +165,15 @@ void lexer_preprocess_includeconditional(lexer_state_t* state, unsigned long int
         if(stacktop->tokens.data[end].type == LEXER_TOKENTYPE_ENDIF)
             depth--;
 
-        if(MATH_INRANGE(stacktop->tokens.data[end].type, LEXER_TOKENTYPE_STARTOFPREPROCCOND, LEXER_TOKENTYPE_ENDOFPREPROCCOND))
+        if(lexer_preprocess_istokenconditionalstart(state, end))
             depth++;
 
         end++;
     }
+
+    if(depth)
+        lexer_preprocess_errunterminatedcond(state, itoken);
+
     LIST_REMOVERANGE(stacktop->tokens, end - 2, end);
 
     end = begin;

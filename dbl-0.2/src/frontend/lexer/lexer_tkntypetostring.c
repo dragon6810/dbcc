@@ -12,6 +12,9 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_EOF:
         strcpy(str, "eof");
         break;
+    case LEXER_TOKENTYPE_OTHER:
+        strcpy(str, "");
+        break;
     case LEXER_TOKENTYPE_OPENBRACKET:
         strcpy(str, "[");
         break;
