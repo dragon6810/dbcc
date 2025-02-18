@@ -75,7 +75,7 @@ void cli_errorsyntax(const char* file, unsigned long int line, unsigned long int
     printf("\033[31;1merror: ");
 
     printf("\033[0;1m");
-    printf(format, args);
+    vprintf(format, args);
     printf("\n");
 
     printf("\033[0m");

@@ -129,7 +129,7 @@ static int lexer_tokenize_isanglestring(char* str)
     beginning = str;
     while(*str && (*str != '>' || textutils_ischarcancelled(beginning, str)))
         str++;
-    
+
     if(!*str || !*str++)
         return 0;
 

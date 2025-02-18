@@ -48,6 +48,122 @@ void lexer_preprocess_errnodirective(lexer_state_t* state, unsigned long int ito
     abort();
 }
 
+void lexer_preprocess_errnomacro(lexer_state_t* state, unsigned long int itoken)
+{
+    lexer_statesrcel_t *stacktop;
+    lexer_token_t *token;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    token = &stacktop->tokens.data[itoken];
+
+    cli_errorsyntax(token->file, token->line, token->col + strlen(token->val), "macro name missing");
+    abort();
+}
+
+void lexer_preprocess_errmacroident(lexer_state_t* state, unsigned long int itoken)
+{
+    lexer_statesrcel_t *stacktop;
+    lexer_token_t *token;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    token = &stacktop->tokens.data[itoken];
+
+    cli_errorsyntax(token->file, token->line, token->col, "macro name must be an identifier");
+    abort();
+}
+
+void lexer_preprocess_errdirectiveextratokens(lexer_state_t* state, unsigned long int itoken, const char* directive)
+{
+    lexer_statesrcel_t *stacktop;
+    lexer_token_t *token;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    token = &stacktop->tokens.data[itoken];
+
+    cli_errorsyntax(token->file, token->line, token->col, "extra tokens at end of %s directive", directive);
+    abort();
+}
+
+void lexer_preprocess_excludeconditional(lexer_state_t* state, unsigned long int itoken)
+{
+    lexer_statesrcel_t *stacktop;
+    unsigned long int depth, begin, end;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    depth = 1;
+    begin = itoken - 1;
+    end = itoken + 1;
+
+    while(depth && stacktop->tokens.data[end].type != LEXER_TOKENTYPE_EOF)
+    {
+        if(stacktop->tokens.data[end].type == LEXER_TOKENTYPE_ENDIF)
+            depth--;
+
+        if(MATH_INRANGE(stacktop->tokens.data[end].type, LEXER_TOKENTYPE_STARTOFPREPROCCOND, LEXER_TOKENTYPE_ENDOFPREPROCCOND))
+            depth++;
+
+        end++;
+    }
+
+    LIST_REMOVERANGE(stacktop->tokens, begin, end);
+}
+
+void lexer_preprocess_includeconditional(lexer_state_t* state, unsigned long int itoken)
+{
+    lexer_statesrcel_t *stacktop;
+    unsigned long int depth, begin, end;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    depth = 1;
+    begin = itoken - 1;
+    end = itoken + 1;
+
+    while(depth && stacktop->tokens.data[end].type != LEXER_TOKENTYPE_EOF)
+    {
+        if(stacktop->tokens.data[end].type == LEXER_TOKENTYPE_ENDIF)
+            depth--;
+
+        if(MATH_INRANGE(stacktop->tokens.data[end].type, LEXER_TOKENTYPE_STARTOFPREPROCCOND, LEXER_TOKENTYPE_ENDOFPREPROCCOND))
+            depth++;
+
+        end++;
+    }
+    LIST_REMOVERANGE(stacktop->tokens, end - 2, end);
+
+    end = begin;
+    while(stacktop->tokens.data[end].type != LEXER_TOKENTYPE_EOF && stacktop->tokens.data[end].posline == stacktop->tokens.data[begin].posline)
+        end++;
+
+    LIST_REMOVERANGE(stacktop->tokens, begin, end);
+}
+
+void lexer_preprocess_processifdef(lexer_state_t* state, unsigned long int itoken)
+{
+    lexer_statesrcel_t *stacktop;
+    lexer_token_t *token, *next;
+
+    stacktop = &state->srcstack.data[state->srcstack.size - 1];
+
+    token = &stacktop->tokens.data[itoken];
+    next = &stacktop->tokens.data[itoken+1];
+
+    if(next->type != LEXER_TOKENTYPE_IDENTIFIER && !MATH_INRANGE(next->type, LEXER_TOKENTYPE_STARTOFKEYWORDS, LEXER_TOKENTYPE_ENDOFKEYWORDS))
+        lexer_preprocess_errmacroident(state, itoken + 1);
+
+    if(token->posline != next->posline)
+        lexer_preprocess_errnomacro(state, itoken);
+
+    if(next->posline == (next+1)->posline)
+        lexer_preprocess_errdirectiveextratokens(state, itoken+2, "#ifdef");
+
+    lexer_preprocess_excludeconditional(state, itoken);
+}
+
 bool lexer_preprocess_tryreplacedefine(lexer_state_t* state, unsigned long int itoken)
 {
     unsigned long int i;
@@ -213,6 +329,9 @@ bool lexer_preprocess_processstatement(lexer_state_t* state, unsigned long int i
         return true;
     case LEXER_TOKENTYPE_DEFINE:
         lexer_preprocess_processdefine(state, itoken + 1);
+        return true;
+    case LEXER_TOKENTYPE_IFDEF:
+        lexer_preprocess_processifdef(state, itoken + 1);
         return true;
     default:
         lexer_preprocess_errnodirective(state, itoken + 1);
