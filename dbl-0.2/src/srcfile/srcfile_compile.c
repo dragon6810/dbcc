@@ -8,6 +8,7 @@ bool srcfile_compile(srcfile_t* srcfile)
     assert(srcfile->rawtext);
 
     lexer_lexfile(srcfile);
+    parser_parse(srcfile);
 
     return true;
 }

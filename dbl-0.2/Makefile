@@ -1,5 +1,5 @@
 CC := clang -c
-CC_FLAGS := -D_POSIX_C_SOURCE=200809L -Wall -Werror -O3 -g -std=gnu89 -MMD -MP -fsanitize=address -DDEBUG
+CC_FLAGS := -D_POSIX_C_SOURCE=200809L -Wall -Werror -Wno-switch -O3 -g -std=gnu89 -MMD -MP -fsanitize=address -DDEBUG
 
 LD := clang
 LD_FLAGS := -fsanitize=address

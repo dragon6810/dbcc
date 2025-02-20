@@ -4,5 +4,6 @@
 #include <std/list/list.h>
 
 LIST_TYPE(char*, list_str)
+LIST_TYPE(int, list_int);
 
 #endif

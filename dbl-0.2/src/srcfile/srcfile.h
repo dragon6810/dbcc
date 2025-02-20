@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include <frontend/lexer/lexer.h>
+#include <frontend/parser/parser.h>
 #include <std/list/list.h>
 
 /*
@@ -20,6 +21,7 @@ struct srcfile_s
 {
     char *path, *rawtext;
     lexer_state_t lexer;
+    parser_tree_t ast;
 };
 
 bool srcfile_load(char* path, srcfile_t* srcfile);
