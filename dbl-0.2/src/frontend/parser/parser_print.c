@@ -190,6 +190,12 @@ void parser_print_r(parser_tree_t* tree, parser_astnode_t* node, int depth)
     for(i=0; i<depth; i++)
         printf(" ");
 
+    if(!node)
+    {
+        printf("\033[32mNULL\033[0m\n");
+        return;
+    }
+
     if(node->token)
     {
         lexer_tkntypetostring(node->token->type, name);
