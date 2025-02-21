@@ -90,6 +90,9 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_PERIOD:
         strcpy(str, ".");
         break;
+    case LEXER_TOKENTYPE_ELIPSES:
+        strcpy(str, "...");
+        break;
     case LEXER_TOKENTYPE_PLUS:
         strcpy(str, "+");
         break;

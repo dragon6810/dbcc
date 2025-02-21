@@ -98,6 +98,7 @@ typedef enum
     LEXER_TOKENTYPE_POUND,        /* #   */
     LEXER_TOKENTYPE_DBLPOUND,     /* ##  */
     LEXER_TOKENTYPE_PERIOD,       /* .   */
+    LEXER_TOKENTYPE_ELIPSES,      /* ... */
     LEXER_TOKENTYPE_PLUS,         /* +   */
     LEXER_TOKENTYPE_MINUS,        /* -   */
     LEXER_TOKENTYPE_MULT,         /* *   */

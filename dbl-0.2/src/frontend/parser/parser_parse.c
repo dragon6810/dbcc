@@ -144,31 +144,200 @@ parser_astnode_t* parser_parse_allocnode(void)
     return node;
 }
 
+parser_astnode_t* parser_parse_declarator(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
+
+/*
+    <parameter-declaration> ::= {<declaration-specifier>}+ <declarator>
+                              | {<declaration-specifier>}+
+*/
+parser_astnode_t* parser_parse_parameterdeclaration(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
+{
+    int i;
+
+    parser_astnode_t *node, *child;
+    list_parser_astnode_p_t declspecs;
+
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_PARAMDECL;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    declspecs = parser_parse_consumedeclspecs(srcfile, node);
+    if(!declspecs.size)
+        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "expected declaration specifier");
+
+    for(i=0; i<declspecs.size; i++)
+        LIST_PUSH(node->children, declspecs.data[i]);
+
+    if
+    (
+        parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_ASTERISK || 
+        parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_IDENTIFIER
+    )
+    {
+        /* declarator */
+
+        child = parser_parse_declarator(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+    }
+
+    return node;
+}
+
+/*
+    <parameter-list> ::= <parameter-declaration>
+                       | <parameter-list> , <parameter-declaration>
+*/
+parser_astnode_t* parser_parse_parameterlist(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
+{
+    parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
+
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_PARAMLIST;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    child = parser_parse_parameterdeclaration(srcfile, node, panic);
+    LIST_PUSH(node->children, child);
+    while(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_COMMA)
+    {
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_COMMA);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        child = parser_parse_parameterdeclaration(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+    }
+
+    return node;
+}
+
+/*
+    <parameter-type-list> ::= <parameter-list>
+                            | <parameter-list> , ...
+*/
+parser_astnode_t* parser_parse_parametertypelist(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
+{
+    parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
+
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_PARAMTYPELIST;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    child = parser_parse_parameterlist(srcfile, node, panic);
+    LIST_PUSH(node->children, child);
+
+    if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_COMMA)
+    {
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_COMMA);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_COMMA);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+    }
+
+    return node;
+}
+
 /*
     <direct-declarator> ::= <identifier>
                           | ( <declarator> )
                           | <direct-declarator> [ {<constant-expression>}? ]
                           | <direct-declarator> ( <parameter-type-list> )
-                          | <direct-declarator> ( {<identifier>}* )
 */
 parser_astnode_t* parser_parse_directdeclarator(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
 {
-    parser_astnode_t *node, *identterm;
+    parser_astnode_t *node, *child, *term;
     lexer_token_t *tkn;
-
-    /* TODO: other forms than just identifier */
 
     node = parser_parse_allocnode();
     node->type = PARSER_NODETYPE_DIRECTDECL;
     LIST_INITIALIZE(node->children);
     node->parent = parent;
     
-    tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_IDENTIFIER);
-    identterm = parser_parse_allocnode();
-    identterm->type = PARSER_NODETYPE_TERMINAL;
-    identterm->parent = node;
-    identterm->token = tkn;
-    LIST_PUSH(node->children, identterm);
+    tkn = parser_parse_consumetoken(srcfile);
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_OPENPARENTH:
+        term = parser_parse_allocnode();
+        term->type = PARSER_NODETYPE_TERMINAL;
+        term->parent = node;
+        term->token = tkn;
+        LIST_PUSH(node->children, term);
+
+        child = parser_parse_declarator(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_CLOSEPARENTH);
+        term = parser_parse_allocnode();
+        term->type = PARSER_NODETYPE_TERMINAL;
+        term->parent = node;
+        term->token = tkn;
+        LIST_PUSH(node->children, term);
+
+        break;
+    case LEXER_TOKENTYPE_IDENTIFIER:
+        term = parser_parse_allocnode();
+        term->type = PARSER_NODETYPE_TERMINAL;
+        term->parent = node;
+        term->token = tkn;
+        LIST_PUSH(node->children, term);
+
+        break;
+    default:
+        parser_parse_panic(srcfile, tkn, "expected '(' or identifier");
+    }
+
+    if
+    (
+        parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_OPENPARENTH || 
+        parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_OPENBRACKET
+    )
+    {
+        switch((tkn = parser_parse_consumetoken(srcfile))->type)
+        {
+        case LEXER_TOKENTYPE_OPENPARENTH:
+            term = parser_parse_allocnode();
+            term->type = PARSER_NODETYPE_TERMINAL;
+            term->parent = node;
+            term->token = tkn;
+            LIST_PUSH(node->children, term);
+
+            child = parser_parse_parametertypelist(srcfile, node, panic);
+            LIST_PUSH(node->children, child);
+
+            tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_CLOSEPARENTH);
+            term = parser_parse_allocnode();
+            term->type = PARSER_NODETYPE_TERMINAL;
+            term->parent = node;
+            term->token = tkn;
+            LIST_PUSH(node->children, term);
+            
+            break;
+        case LEXER_TOKENTYPE_OPENBRACKET:
+
+            parser_parse_panic(srcfile, tkn, "TODO: <direct-declarator> [ {<constant-expression>}? ]");
+
+            break;
+        default:
+            /* wtf */
+            break;
+        }
+    }
 
     return node;
 }
@@ -268,16 +437,28 @@ parser_astnode_t* parser_parse_declaration(srcfile_t* srcfile, parser_astnode_t*
 }
 
 /*
-    <function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
+    <function-definition> ::= {<declaration-specifier>}* <declarator> <compound-statement>
                                                                       ^ we start here in this function
 */
 parser_astnode_t* parser_parse_functiondefinition(srcfile_t* srcfile, parser_astnode_t* parent, list_parser_astnode_p_t declspecs, parser_astnode_t* declarator, bool panic)
 {
-    /*lexer_token_t* tkn;
+    int i;
 
-    tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_OPENPARENTH);*/
+    parser_astnode_t* node;
 
-    return NULL;
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_FUNCTIONDEF;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    for(i=0; i<declspecs.size; i++)
+    {
+        declspecs.data[i]->parent = node;
+        LIST_PUSH(node->children, declspecs.data[i]);
+    }
+    LIST_PUSH(node->children, declarator);
+
+    return node;
 }
 
 /*
@@ -286,8 +467,6 @@ parser_astnode_t* parser_parse_functiondefinition(srcfile_t* srcfile, parser_ast
 */
 parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
 {
-    int i;
-
     parser_astnode_t *newnode, *declarator, *child;
     list_parser_astnode_p_t declspecs;
 
@@ -302,10 +481,6 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
     declspecs = parser_parse_consumedeclspecs(srcfile, newnode);
     declarator = parser_parse_declarator(srcfile, parent, panic);
 
-    for(i=0; i<declspecs.size; i++)
-        LIST_PUSH(newnode->children, declspecs.data[i]);
-    LIST_PUSH(newnode->children, declarator);
-
     if
     (
         parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_ASSIGN    || 
@@ -317,19 +492,11 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
 
         parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "TODO: <external declaration> -> <declaration>");
     }
-    else if
-    (
-        parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_OPENPARENTH
-    )
+    else
     {
         /* function definition */
         child = parser_parse_functiondefinition(srcfile, newnode, declspecs, declarator, panic);
         LIST_PUSH(newnode->children, child);
-        LIST_POP(newnode->children, NULL);
-    }
-    else
-    {
-        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "expected function definition or declaration");
     }
 
     return newnode;
