@@ -82,19 +82,20 @@ typedef enum
     PARSER_NODETYPE_JUMPSTATEMENT,
 } parser_nodetype_e;
 
+LIST_TYPE(parser_astnode_t, list_parser_astnode)
+LIST_TYPE(parser_astnode_t*, list_parser_astnode_p)
+
 struct parser_astnode_s
 {
     parser_nodetype_e type;
-    list_int_t children;
-    int parent;
+    list_parser_astnode_p_t children;
+    parser_astnode_t* parent;
     lexer_token_t* token; /* NULL if non-terminal */
 };
 
-LIST_TYPE(parser_astnode_t, list_parser_astnode)
-
 struct parser_tree_s
 {
-    list_parser_astnode_t nodes;
+    parser_astnode_t* nodes;
 
     unsigned long int curtok;
 };
@@ -106,6 +107,7 @@ struct parser_tree_s
 */
 
 void parser_parse(struct srcfile_s* srcfile);
+void parser_freenode(parser_astnode_t* node);
 void parser_print(parser_tree_t* tree);
 
 #endif

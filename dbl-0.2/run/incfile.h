@@ -1,1 +1,1 @@
-void testinclude(float n);
+void* testinclude(float n);

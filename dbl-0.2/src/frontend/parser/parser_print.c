@@ -181,14 +181,11 @@ void parser_print_typetostr(parser_nodetype_e type, char* out)
     }
 }
 
-void parser_print_r(parser_tree_t* tree, int inode, int depth)
+void parser_print_r(parser_tree_t* tree, parser_astnode_t* node, int depth)
 {
     int i;
 
-    parser_astnode_t *node;
     char name[LEXER_MAXHARDTOKENLEN];
-
-    node = &tree->nodes.data[inode];
 
     for(i=0; i<depth; i++)
         printf(" ");
@@ -210,7 +207,6 @@ void parser_print_r(parser_tree_t* tree, int inode, int depth)
 void parser_print(parser_tree_t* tree)
 {
     assert(tree);
-    assert(tree->nodes.size);
 
-    parser_print_r(tree, 0, 0);
+    parser_print_r(tree, tree->nodes, 0);
 }
