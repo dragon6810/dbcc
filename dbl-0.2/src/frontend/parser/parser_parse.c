@@ -1007,7 +1007,6 @@ parser_astnode_t* parser_parse_initdeclarator(srcfile_t* srcfile, parser_astnode
 
     return node;
 }
-
 /*
     <declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
 */
@@ -1130,6 +1129,7 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
 {
     parser_astnode_t *newnode, *declarator, *child;
     list_parser_astnode_p_t declspecs;
+    unsigned long int begin;
 
     newnode = declarator = 0;
 
@@ -1138,6 +1138,8 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
     LIST_INITIALIZE(newnode->children);
     newnode->parent = parent;
     newnode->token = NULL;
+
+    begin = srcfile->ast.curtok;
 
     declspecs = parser_parse_consumedeclspecs(srcfile, newnode);
     declarator = parser_parse_declarator(srcfile, parent, panic);
@@ -1151,7 +1153,9 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
     {
         /* declaration */
 
-        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "TODO: <external declaration> -> <declaration>");
+        srcfile->ast.curtok = begin;
+        child = parser_parse_declaration(srcfile, newnode, panic);
+        LIST_PUSH(newnode->children, child);
     }
     else
     {
@@ -1168,6 +1172,8 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
 */
 parser_astnode_t* parser_parse_translationunit(srcfile_t* srcfile, bool panic)
 {
+    int i;
+
     parser_astnode_t *root, *child;
 
     root = parser_parse_allocnode();
@@ -1178,6 +1184,7 @@ parser_astnode_t* parser_parse_translationunit(srcfile_t* srcfile, bool panic)
 
     srcfile->ast.nodes = root;
 
+    i = 0;
     srcfile->ast.curtok = 0;
     while(parser_parse_peektoken(srcfile, 0)->type != LEXER_TOKENTYPE_EOF)
     {
@@ -1185,7 +1192,9 @@ parser_astnode_t* parser_parse_translationunit(srcfile_t* srcfile, bool panic)
             goto fail;
 
         LIST_PUSH(root->children, child);
-        break;
+
+        if(i++ >= 2)
+            break;
     }
 
     return root;
