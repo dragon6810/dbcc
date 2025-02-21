@@ -42,7 +42,7 @@ lexer_token_t* parser_parse_expecttoken(srcfile_t* srcfile, lexer_tokentype_e ty
     tkn = parser_parse_consumetoken(srcfile);
     if(tkn->type != type)
     {
-        lexer_tkntypetostring(tkn->type, name);
+        lexer_tkntypetostring(type, name);
         parser_parse_panic(srcfile, tkn, "expected %s", name);
     }
 
@@ -196,7 +196,7 @@ parser_astnode_t* parser_parse_pointer(srcfile_t* srcfile, parser_astnode_t* par
 
     while(true)
     {
-        tkn = parser_parse_consumetoken(srcfile);
+        tkn = parser_parse_peektoken(srcfile, 0);
         if(tkn->type != LEXER_TOKENTYPE_CONST && tkn->type != LEXER_TOKENTYPE_VOLATILE)
             break;
 
@@ -211,6 +211,8 @@ parser_astnode_t* parser_parse_pointer(srcfile_t* srcfile, parser_astnode_t* par
         typequalterm->parent = typequal;
         typequalterm->token = tkn;
         LIST_PUSH(typequal->children, typequalterm);
+
+        parser_parse_consumetoken(srcfile);
     }
 
     if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_ASTERISK)
@@ -269,14 +271,7 @@ parser_astnode_t* parser_parse_declaration(srcfile_t* srcfile, parser_astnode_t*
     <function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
                                                                       ^ we start here in this function
 */
-parser_astnode_t* parser_parse_functiondefinition
-(
-    srcfile_t* srcfile, 
-    parser_astnode_t* parent,
-    list_parser_astnode_p_t declspecs,
-    parser_astnode_t* declarator,
-    bool panic
-)
+parser_astnode_t* parser_parse_functiondefinition(srcfile_t* srcfile, parser_astnode_t* parent, list_parser_astnode_p_t declspecs, parser_astnode_t* declarator, bool panic)
 {
     /*lexer_token_t* tkn;
 
@@ -291,8 +286,10 @@ parser_astnode_t* parser_parse_functiondefinition
 */
 parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
 {
+    int i;
+
     parser_astnode_t *newnode, *declarator, *child;
-    list_parser_astnode_p_t declspecs/*, declarators*/;
+    list_parser_astnode_p_t declspecs;
 
     newnode = declarator = 0;
 
@@ -305,6 +302,10 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
     declspecs = parser_parse_consumedeclspecs(srcfile, newnode);
     declarator = parser_parse_declarator(srcfile, parent, panic);
 
+    for(i=0; i<declspecs.size; i++)
+        LIST_PUSH(newnode->children, declspecs.data[i]);
+    LIST_PUSH(newnode->children, declarator);
+
     if
     (
         parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_ASSIGN    || 
@@ -314,8 +315,7 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
     {
         /* declaration */
 
-        puts("TODO: declaration");
-        abort();
+        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "TODO: <external declaration> -> <declaration>");
     }
     else if
     (
@@ -325,6 +325,7 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
         /* function definition */
         child = parser_parse_functiondefinition(srcfile, newnode, declspecs, declarator, panic);
         LIST_PUSH(newnode->children, child);
+        LIST_POP(newnode->children, NULL);
     }
     else
     {
@@ -339,7 +340,7 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
 */
 parser_astnode_t* parser_parse_translationunit(srcfile_t* srcfile, bool panic)
 {
-    parser_astnode_t* root;
+    parser_astnode_t *root, *child;
 
     root = parser_parse_allocnode();
     root->type = PARSER_NODETYPE_TRANSLATIONUNIT;
@@ -352,8 +353,10 @@ parser_astnode_t* parser_parse_translationunit(srcfile_t* srcfile, bool panic)
     srcfile->ast.curtok = 0;
     while(parser_parse_peektoken(srcfile, 0)->type != LEXER_TOKENTYPE_EOF)
     {
-        if(!parser_parse_externaldecl(srcfile, 0, panic))
+        if(!(child = parser_parse_externaldecl(srcfile, 0, panic)))
             goto fail;
+
+        LIST_PUSH(root->children, child);
         break;
     }
 
