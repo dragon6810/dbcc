@@ -165,6 +165,7 @@ parser_astnode_t* parser_parse_allocnode(void)
     return node;
 }
 
+parser_astnode_t* parser_parse_expression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
 parser_astnode_t* parser_parse_declarator(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
 
 /*
@@ -487,6 +488,21 @@ parser_astnode_t* parser_parse_primaryexpression(srcfile_t* srcfile, parser_astn
         
         break;
     case LEXER_TOKENTYPE_OPENPARENTH:
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        child = parser_parse_expression(srcfile, node, panic);
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_CLOSEPARENTH);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
         parser_parse_panic(srcfile, tkn, "TODO: <primary-expression> ::= ( <expression> )");
 
         break;
@@ -898,6 +914,39 @@ parser_astnode_t* parser_parse_assignmentexpression(srcfile_t* srcfile, parser_a
 
     child = parser_parse_conditionalexpression(srcfile, node, panic);
     LIST_PUSH(node->children, child);
+
+    return node;
+}
+
+/*
+    <expression> ::= <assignment-expression>
+                   | <expression> , <assignment-expression>
+*/
+parser_astnode_t* parser_parse_expression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
+{
+    parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
+
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_ASSIGNEXPR;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    child = parser_parse_assignmentexpression(srcfile, node, panic);
+    LIST_PUSH(node->children, child);
+
+    while(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_COMMA)
+    {
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_COMMA);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        child = parser_parse_assignmentexpression(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+    }
 
     return node;
 }
