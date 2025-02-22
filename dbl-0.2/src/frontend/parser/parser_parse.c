@@ -670,7 +670,8 @@ parser_astnode_t* parser_parse_castexpression(srcfile_t* srcfile, parser_astnode
     if
     (
         parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_OPENPARENTH &&
-        parser_parse_peektoken(srcfile, 1)->type == LEXER_TOKENTYPE_IDENTIFIER
+        parser_parse_peektoken(srcfile, 1)->type == LEXER_TOKENTYPE_IDENTIFIER &&
+        parser_parse_peektoken(srcfile, 2)->type == LEXER_TOKENTYPE_CLOSEPARENTH
     )
     {
         parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), 
@@ -728,6 +729,7 @@ parser_astnode_t* parser_parse_multiplicativeexpression(srcfile_t* srcfile, pars
 parser_astnode_t* parser_parse_additiveexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
 {
     parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
 
     node = parser_parse_allocnode();
     node->type = PARSER_NODETYPE_ADDEXPR;
