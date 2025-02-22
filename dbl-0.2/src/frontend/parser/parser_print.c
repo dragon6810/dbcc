@@ -199,7 +199,7 @@ void parser_print_r(parser_tree_t* tree, parser_astnode_t* node, int depth)
     if(node->token)
     {
         lexer_tkntypetostring(node->token->type, name);
-        printf("\033[33mTerminal \"%s\" (\"%s\")\033[0m\n", node->token->val, name);
+        printf("\033[33mTerminal \"%s\" (\"%s\", %s:%lu:%lu)\033[0m\n", node->token->val, name, node->token->file, node->token->line+1, node->token->col+1);
         return;
     }
 

@@ -101,7 +101,6 @@ typedef enum
     LEXER_TOKENTYPE_ELIPSES,      /* ... */
     LEXER_TOKENTYPE_PLUS,         /* +   */
     LEXER_TOKENTYPE_MINUS,        /* -   */
-    LEXER_TOKENTYPE_MULT,         /* *   */
     LEXER_TOKENTYPE_DIV,          /* /   */
     LEXER_TOKENTYPE_MOD,          /* %   */
     LEXER_TOKENTYPE_INCREMENT,    /* ++  */
@@ -113,7 +112,6 @@ typedef enum
     LEXER_TOKENTYPE_MODEQUALS,    /* %=  */
     LEXER_TOKENTYPE_BITSHIFTL,    /* <<  */
     LEXER_TOKENTYPE_BITSHIFTR,    /* >>  */
-    LEXER_TOKENTYPE_BITAND,       /* &   */
     LEXER_TOKENTYPE_BITOR,        /* |   */
     LEXER_TOKENTYPE_BITXOR,       /* ^   */
     LEXER_TOKENTYPE_BITNOT,       /* ~   */

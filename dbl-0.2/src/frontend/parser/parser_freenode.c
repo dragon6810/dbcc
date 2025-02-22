@@ -8,14 +8,7 @@ void parser_freenode_r(parser_astnode_t* node)
 
     for(i=0; i<node->children.size; i++)
     {
-        if(!node->children.data[i]->children.size)
-        {
-            free(node->children.data[i]);
-            continue;
-        }
-
         parser_freenode_r(node->children.data[i]);
-        free(node);
     }
 
     LIST_FREE(node->children);

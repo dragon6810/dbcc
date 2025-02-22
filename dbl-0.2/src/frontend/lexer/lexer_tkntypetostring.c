@@ -99,9 +99,6 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_MINUS:
         strcpy(str, "-");
         break;
-    case LEXER_TOKENTYPE_MULT:
-        strcpy(str, "*");
-        break;
     case LEXER_TOKENTYPE_DIV:
         strcpy(str, "/");
         break;
@@ -134,9 +131,6 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
         break;
     case LEXER_TOKENTYPE_BITSHIFTR:
         strcpy(str, ">>");
-        break;
-    case LEXER_TOKENTYPE_BITAND:
-        strcpy(str, "&");
         break;
     case LEXER_TOKENTYPE_BITOR:
         strcpy(str, "|");
