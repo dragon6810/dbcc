@@ -500,8 +500,6 @@ parser_astnode_t* parser_parse_primaryexpression(srcfile_t* srcfile, parser_astn
         child->token = tkn;
         LIST_PUSH(node->children, child);
 
-        parser_parse_panic(srcfile, tkn, "TODO: <primary-expression> ::= ( <expression> )");
-
         break;
     default:
         parser_parse_panic(srcfile, tkn, "expected expression");
@@ -738,6 +736,26 @@ parser_astnode_t* parser_parse_additiveexpression(srcfile_t* srcfile, parser_ast
 
     child = parser_parse_multiplicativeexpression(srcfile, node, panic);
     LIST_PUSH(node->children, child);
+
+    while
+    (
+        (tkn = parser_parse_peektoken(srcfile, 0)) &&
+        (
+            tkn->type == LEXER_TOKENTYPE_PLUS || 
+            tkn->type == LEXER_TOKENTYPE_MINUS
+        )
+    )
+    {
+        tkn = parser_parse_consumetoken(srcfile);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        child = parser_parse_multiplicativeexpression(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+    }
 
     if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_PLUS)
         parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), 
@@ -1133,11 +1151,88 @@ parser_astnode_t* parser_parse_expression(srcfile_t* srcfile, parser_astnode_t* 
     return node;
 }
 
+/*
+    <jump-statement> ::= goto <identifier> ;
+                       | continue ;
+                       | break ;
+                       | return {<expression>}? ;
+*/
 parser_astnode_t* parser_parse_jumpstatement(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
 {
-    parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "TODO: <jump-statement>");
+    parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
 
-    return NULL;
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_JUMPSTATEMENT;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    tkn = parser_parse_consumetoken(srcfile);
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_GOTO:
+    case LEXER_TOKENTYPE_CONTINUE:
+    case LEXER_TOKENTYPE_BREAK:
+    case LEXER_TOKENTYPE_RETURN:
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        break;
+    default:
+        parser_parse_panic(srcfile, tkn, "expected jump statement");
+    }
+
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_GOTO:
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_IDENTIFIER);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_SEMICOLON);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        break;
+    case LEXER_TOKENTYPE_CONTINUE:
+    case LEXER_TOKENTYPE_BREAK:
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_SEMICOLON);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        break;
+    case LEXER_TOKENTYPE_RETURN:
+        if(parser_parse_peektoken(srcfile, 0)->type != LEXER_TOKENTYPE_SEMICOLON)
+        {
+            child = parser_parse_expression(srcfile, node, panic);
+            LIST_PUSH(node->children, child);
+        }
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_SEMICOLON);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        break;
+    default:
+        break; /* ? */
+    }
+
+    return node;
 }
 
 parser_astnode_t* parser_parse_iterationstatement(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
@@ -1180,7 +1275,7 @@ parser_astnode_t* parser_parse_expressionstatement(srcfile_t* srcfile, parser_as
     child->token = tkn;
     LIST_PUSH(node->children, child);
 
-    return NULL;
+    return node;
 }
 
 parser_astnode_t* parser_parse_labeledstatement(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
@@ -1203,7 +1298,7 @@ parser_astnode_t* parser_parse_statement(srcfile_t* srcfile, parser_astnode_t* p
     parser_astnode_t *node, *child;
 
     node = parser_parse_allocnode();
-    node->type = PARSER_NODETYPE_INITIALIZER;
+    node->type = PARSER_NODETYPE_STATEMENT;
     LIST_INITIALIZE(node->children);
     node->parent = parent;
 
