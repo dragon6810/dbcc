@@ -3,7 +3,7 @@
 
 /* #include <string.h> */
 
-#define MY_DEFINE (6 + 13)
+#define MY_DEFINE (6 + 13 * 4)
 
 int main(int argc, char** argv)
 {
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
      * line
      * comment
      * cool
-    */x += MY_DEFINE;
+    */x += (6 + 13);
     c = '3';
     c = '\n';
 

@@ -492,6 +492,7 @@ parser_astnode_t* parser_parse_primaryexpression(srcfile_t* srcfile, parser_astn
         LIST_PUSH(node->children, child);
 
         child = parser_parse_expression(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
 
         tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_CLOSEPARENTH);
         child = parser_parse_allocnode();
@@ -692,6 +693,7 @@ parser_astnode_t* parser_parse_castexpression(srcfile_t* srcfile, parser_astnode
 parser_astnode_t* parser_parse_multiplicativeexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
 {
     parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
 
     node = parser_parse_allocnode();
     node->type = PARSER_NODETYPE_MULTEXPR;
@@ -701,20 +703,24 @@ parser_astnode_t* parser_parse_multiplicativeexpression(srcfile_t* srcfile, pars
     child = parser_parse_castexpression(srcfile, node, panic);
     LIST_PUSH(node->children, child);
 
-    if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_ASTERISK)
-        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), 
-                           "TODO: <multiplicative-expression> ::= \
-                           <multiplicative-expression> * <cast-expression>");
+    tkn = parser_parse_peektoken(srcfile, 0);
+    while
+    (
+        tkn->type == LEXER_TOKENTYPE_ASTERISK || 
+        tkn->type == LEXER_TOKENTYPE_DIV || 
+        tkn->type == LEXER_TOKENTYPE_MOD
+    )
+    {
+        tkn = parser_parse_consumetoken(srcfile);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
 
-    if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_DIV)
-        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), 
-                           "TODO: <multiplicative-expression> ::= \
-                           <multiplicative-expression> / <cast-expression>");
-
-    if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_MOD)
-        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), 
-                           "TODO: <multiplicative-expression> ::= \
-                           <multiplicative-expression> % <cast-expression>");
+        child = parser_parse_multiplicativeexpression(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+    }
 
     return node;
 }
@@ -737,13 +743,11 @@ parser_astnode_t* parser_parse_additiveexpression(srcfile_t* srcfile, parser_ast
     child = parser_parse_multiplicativeexpression(srcfile, node, panic);
     LIST_PUSH(node->children, child);
 
+    tkn = parser_parse_peektoken(srcfile, 0);
     while
     (
-        (tkn = parser_parse_peektoken(srcfile, 0)) &&
-        (
-            tkn->type == LEXER_TOKENTYPE_PLUS || 
-            tkn->type == LEXER_TOKENTYPE_MINUS
-        )
+        tkn->type == LEXER_TOKENTYPE_PLUS || 
+        tkn->type == LEXER_TOKENTYPE_MINUS
     )
     {
         tkn = parser_parse_consumetoken(srcfile);
@@ -756,16 +760,6 @@ parser_astnode_t* parser_parse_additiveexpression(srcfile_t* srcfile, parser_ast
         child = parser_parse_multiplicativeexpression(srcfile, node, panic);
         LIST_PUSH(node->children, child);
     }
-
-    if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_PLUS)
-        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), 
-                           "TODO: <additive-expression> ::= \
-                           <additive-expression> + <multiplicative-expression>");
-
-    if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_MINUS)
-        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), 
-                           "TODO: <additive-expression> ::= \
-                           <additive-expression> - <multiplicative-expression>");
 
     return node;
 }
@@ -1082,7 +1076,9 @@ parser_astnode_t* parser_parse_assignmentexpression(srcfile_t* srcfile, parser_a
     node->parent = parent;
 
     before = srcfile->ast.curtok;
+    printf("token1: %s, %lu:%lu.\n", parser_parse_peektoken(srcfile, 0)->val, parser_parse_peektoken(srcfile, 0)->line+1, parser_parse_peektoken(srcfile, 0)->col+1);
     child = parser_parse_conditionalexpression(srcfile, node, panic);
+    printf("token2: %s, %lu:%lu.\n", parser_parse_peektoken(srcfile, 0)->val, parser_parse_peektoken(srcfile, 0)->line+1, parser_parse_peektoken(srcfile, 0)->col+1);
     if
     (
         parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_ASSIGN || 
