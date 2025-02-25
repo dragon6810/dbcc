@@ -644,11 +644,11 @@ parser_astnode_t* parser_parse_unaryexpression(srcfile_t* srcfile, parser_astnod
 
         return node;
     default:
+        child = parser_parse_postfixexpression(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+
         break;
     }
-
-    child = parser_parse_postfixexpression(srcfile, node, panic);
-    LIST_PUSH(node->children, child);
 
     return node;
 }
@@ -660,17 +660,19 @@ parser_astnode_t* parser_parse_unaryexpression(srcfile_t* srcfile, parser_astnod
 parser_astnode_t* parser_parse_castexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
 {
     parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
 
     node = parser_parse_allocnode();
     node->type = PARSER_NODETYPE_CASTEXPR;
     LIST_INITIALIZE(node->children);
     node->parent = parent;
 
+    tkn = parser_parse_peektoken(srcfile, 0);
     if
     (
-        parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_OPENPARENTH &&
-        parser_parse_peektoken(srcfile, 1)->type == LEXER_TOKENTYPE_IDENTIFIER &&
-        parser_parse_peektoken(srcfile, 2)->type == LEXER_TOKENTYPE_CLOSEPARENTH
+        tkn->type == LEXER_TOKENTYPE_OPENPARENTH &&
+        (tkn+1)->type == LEXER_TOKENTYPE_IDENTIFIER &&
+        (tkn+2)->type == LEXER_TOKENTYPE_CLOSEPARENTH
     )
     {
         parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), 
@@ -743,11 +745,13 @@ parser_astnode_t* parser_parse_additiveexpression(srcfile_t* srcfile, parser_ast
     child = parser_parse_multiplicativeexpression(srcfile, node, panic);
     LIST_PUSH(node->children, child);
 
-    tkn = parser_parse_peektoken(srcfile, 0);
     while
     (
-        tkn->type == LEXER_TOKENTYPE_PLUS || 
-        tkn->type == LEXER_TOKENTYPE_MINUS
+        (tkn = parser_parse_peektoken(srcfile, 0)) && 
+        (
+            tkn->type == LEXER_TOKENTYPE_PLUS || 
+            tkn->type == LEXER_TOKENTYPE_MINUS
+        )
     )
     {
         tkn = parser_parse_consumetoken(srcfile);
@@ -1055,7 +1059,7 @@ parser_astnode_t* parser_parse_assignmentoperator(srcfile_t* srcfile, parser_ast
 
         break;
     default:
-        parser_parse_panic(srcfile, tkn, "expected assignemnt operator");
+        parser_parse_panic(srcfile, tkn, "expected assignment operator");
     }
 
     return node;
@@ -1076,9 +1080,7 @@ parser_astnode_t* parser_parse_assignmentexpression(srcfile_t* srcfile, parser_a
     node->parent = parent;
 
     before = srcfile->ast.curtok;
-    printf("token1: %s, %lu:%lu.\n", parser_parse_peektoken(srcfile, 0)->val, parser_parse_peektoken(srcfile, 0)->line+1, parser_parse_peektoken(srcfile, 0)->col+1);
     child = parser_parse_conditionalexpression(srcfile, node, panic);
-    printf("token2: %s, %lu:%lu.\n", parser_parse_peektoken(srcfile, 0)->val, parser_parse_peektoken(srcfile, 0)->line+1, parser_parse_peektoken(srcfile, 0)->col+1);
     if
     (
         parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_ASSIGN || 

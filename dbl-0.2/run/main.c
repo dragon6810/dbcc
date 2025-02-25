@@ -32,7 +32,7 @@ int main(int argc, char** argv)
      * line
      * comment
      * cool
-    */x += (6 + 13);
+    */x = 6+3;
     c = '3';
     c = '\n';
 
