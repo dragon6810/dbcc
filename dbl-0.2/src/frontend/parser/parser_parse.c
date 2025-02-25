@@ -7,6 +7,7 @@
 #include <srcfile/srcfile.h>
 #include <std/assert/assert.h>
 #include <std/math/math.h>
+#include <std/profiler/profiler.h>
 
 void parser_parse_panic(srcfile_t* srcfile, lexer_token_t* tkn, const char* format, ...)
 {
@@ -153,6 +154,19 @@ list_parser_astnode_p_t parser_parse_consumedeclspecs(srcfile_t* srcfile, parser
     }
 
     return nodes;
+}
+
+char* parser_parse_getdeclaratorname(parser_astnode_t* node)
+{
+    parser_astnode_t *directdecl;
+
+    assert(node);
+    assert(node->type = PARSER_NODETYPE_DECLARATOR);
+
+    directdecl = node->children.data[node->children.size-1];
+    assert(directdecl->children.data[0]->type == PARSER_NODETYPE_TERMINAL);
+
+    return directdecl->children.data[0]->token->val;
 }
 
 parser_astnode_t* parser_parse_allocnode(void)
@@ -1442,9 +1456,10 @@ parser_astnode_t* parser_parse_declaration(srcfile_t* srcfile, parser_astnode_t*
 {
     int i;
 
-    parser_astnode_t *node, *child;
+    parser_astnode_t *node, *child, *storagespec, *declarator;
     lexer_token_t *tkn;
     list_parser_astnode_p_t declspecs;
+    parser_typedef_t typedefel;
 
     node = parser_parse_allocnode();
     node->type = PARSER_NODETYPE_DECL;
@@ -1456,9 +1471,21 @@ parser_astnode_t* parser_parse_declaration(srcfile_t* srcfile, parser_astnode_t*
         parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "expected declaration specifier");
 
     for(i=0; i<declspecs.size; i++)
-        LIST_PUSH(node->children, declspecs.data[i]);
+    {
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_DECLSPEC;
+        LIST_INITIALIZE(child->children);
+        child->parent = node;
+
+        LIST_RESIZE(child->children, 1);
+        declspecs.data[i]->parent = child;
+        child->children.data[0] = declspecs.data[i];
+
+        LIST_PUSH(node->children, child);
+    }
 
     child = parser_parse_initdeclarator(srcfile, node, panic);
+    declarator = child->children.data[0];
     LIST_PUSH(node->children, child);
 
     tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_SEMICOLON);
@@ -1467,6 +1494,24 @@ parser_astnode_t* parser_parse_declaration(srcfile_t* srcfile, parser_astnode_t*
     child->parent = node;
     child->token = tkn;
     LIST_PUSH(node->children, child);
+
+    for(i=0, storagespec=NULL; i<declspecs.size; i++)
+    {
+        if(declspecs.data[i]->type != PARSER_NODETYPE_STORAGECLASSSPEC)
+            continue;
+
+        storagespec = declspecs.data[i]->children.data[0];
+    }
+
+    if(!storagespec)
+        return node;
+
+    /* this is a typedef declaration */
+
+    memset(&typedefel, 0, sizeof(typedefel));
+    typedefel.name = parser_parse_getdeclaratorname(declarator);
+    typedefel.declaration = node;
+    HASHMAP_SET(srcfile->ast.typedefs, typedefel.name, typedefel);
 
     return node;
 }
@@ -1536,9 +1581,18 @@ parser_astnode_t* parser_parse_functiondefinition(srcfile_t* srcfile, parser_ast
 
     for(i=0; i<declspecs.size; i++)
     {
-        declspecs.data[i]->parent = node;
-        LIST_PUSH(node->children, declspecs.data[i]);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_DECLSPEC;
+        LIST_INITIALIZE(child->children);
+        child->parent = node;
+
+        LIST_RESIZE(child->children, 1);
+        declspecs.data[i]->parent = child;
+        child->children.data[0] = declspecs.data[i];
+
+        LIST_PUSH(node->children, child);
     }
+
     LIST_PUSH(node->children, declarator);
 
     child = parser_parse_compoundstatement(srcfile, node, panic);
@@ -1583,12 +1637,16 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
         child = parser_parse_declaration(srcfile, newnode, panic);
         LIST_PUSH(newnode->children, child);
     }
-    else
+    else if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_OPENBRACE)
     {
         /* function definition */
 
         child = parser_parse_functiondefinition(srcfile, newnode, declspecs, declarator, panic);
         LIST_PUSH(newnode->children, child);
+    }
+    else
+    {
+        parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "expected ';'");
     }
 
     return newnode;
@@ -1599,8 +1657,6 @@ parser_astnode_t* parser_parse_externaldecl(srcfile_t* srcfile, parser_astnode_t
 */
 parser_astnode_t* parser_parse_translationunit(srcfile_t* srcfile, bool panic)
 {
-    int i;
-
     parser_astnode_t *root, *child;
 
     root = parser_parse_allocnode();
@@ -1611,32 +1667,25 @@ parser_astnode_t* parser_parse_translationunit(srcfile_t* srcfile, bool panic)
 
     srcfile->ast.nodes = root;
 
-    i = 0;
     srcfile->ast.curtok = 0;
     while(parser_parse_peektoken(srcfile, 0)->type != LEXER_TOKENTYPE_EOF)
     {
-        if(!(child = parser_parse_externaldecl(srcfile, 0, panic)))
-            goto fail;
-
+        child = parser_parse_externaldecl(srcfile, root, panic);
         LIST_PUSH(root->children, child);
-
-        if(i++ >= 2)
-            break;
     }
 
     return root;
-
-fail:
-    if(root)
-        free(root);
-
-    return NULL;
 }
 
 void parser_parse(struct srcfile_s* srcfile)
 {
     assert(srcfile);
     
+    profiler_push("Parse");
+
+    HASHMAP_INITIALIZE(srcfile->ast.typedefs, HASHMAP_BUCKETS_LARGE, string_parser_typedef);
     srcfile->ast.nodes = parser_parse_translationunit(srcfile, true);
     parser_print(&srcfile->ast);
+    
+    profiler_pop();
 }

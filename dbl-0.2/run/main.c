@@ -5,6 +5,8 @@
 
 #define MY_DEFINE (6 + 13 * 4)
 
+typedef int int32_t;
+
 int main(int argc, char** argv)
 {
     int x;

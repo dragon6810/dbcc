@@ -99,6 +99,7 @@ struct parser_astnode_s
 struct parser_tree_s
 {
     parser_astnode_t* nodes;
+    hashmap_string_parser_typedef_t typedefs;
 
     unsigned long int curtok;
 };
