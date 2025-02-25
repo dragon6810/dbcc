@@ -708,9 +708,12 @@ parser_astnode_t* parser_parse_multiplicativeexpression(srcfile_t* srcfile, pars
     tkn = parser_parse_peektoken(srcfile, 0);
     while
     (
-        tkn->type == LEXER_TOKENTYPE_ASTERISK || 
-        tkn->type == LEXER_TOKENTYPE_DIV || 
-        tkn->type == LEXER_TOKENTYPE_MOD
+        (tkn = parser_parse_peektoken(srcfile, 0)) && 
+        (
+            tkn->type == LEXER_TOKENTYPE_ASTERISK || 
+            tkn->type == LEXER_TOKENTYPE_DIV ||
+            tkn->type == LEXER_TOKENTYPE_MOD
+        )
     )
     {
         tkn = parser_parse_consumetoken(srcfile);

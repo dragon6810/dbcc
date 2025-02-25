@@ -32,9 +32,9 @@ int main(int argc, char** argv)
      * line
      * comment
      * cool
-    */x = 6+3;
+    */x += MY_DEFINE;
     c = '3';
     c = '\n';
 
-    return 0;
+    return x;
 }

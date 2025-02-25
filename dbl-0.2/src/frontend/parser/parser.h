@@ -2,6 +2,7 @@
 #define _parser_h
 
 #include <frontend/lexer/lexer.h>
+#include <std/hashmap/hashmap.h>
 #include <std/list/list_types.h>
 
 /*
@@ -20,6 +21,7 @@ struct srcfile_s;
 
 typedef struct parser_astnode_s parser_astnode_t;
 typedef struct parser_tree_s parser_tree_t;
+typedef struct parser_typedef_s parser_typedef_t;
 
 typedef enum
 {
@@ -84,6 +86,7 @@ typedef enum
 
 LIST_TYPE(parser_astnode_t, list_parser_astnode)
 LIST_TYPE(parser_astnode_t*, list_parser_astnode_p)
+HASHMAP_TYPE_DECL(char*, parser_typedef_t, string_parser_typedef)
 
 struct parser_astnode_s
 {
@@ -98,6 +101,12 @@ struct parser_tree_s
     parser_astnode_t* nodes;
 
     unsigned long int curtok;
+};
+
+struct parser_typedef_s
+{
+    char *name;
+    parser_astnode_t* declaration;
 };
 
 /*
