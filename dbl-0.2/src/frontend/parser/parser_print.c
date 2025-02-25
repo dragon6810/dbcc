@@ -181,14 +181,14 @@ void parser_print_typetostr(parser_nodetype_e type, char* out)
     }
 }
 
-void parser_print_r(parser_tree_t* tree, parser_astnode_t* node, int depth)
+void parser_print_r(parser_astnode_t* node, int depth, bool last, char* prefix)
 {
     int i;
 
     char name[LEXER_MAXHARDTOKENLEN];
+    char *newprefix;
 
-    for(i=0; i<depth; i++)
-        printf(" ");
+    printf("\033[32m%s%s\033[0m", prefix, (depth > 0 ? (last ? "`-" : "|-") : ""));
 
     if(!node)
     {
@@ -206,13 +206,18 @@ void parser_print_r(parser_tree_t* tree, parser_astnode_t* node, int depth)
     parser_print_typetostr(node->type, name);
     printf("\033[32mNon-Terminal (\"%s\")\033[0m\n", name);
 
+    newprefix = malloc(strlen(prefix) + 1  + 1 + 1);
+    sprintf(newprefix, "%s%s ", prefix, (last ? " " : "|"));
+
     for(i=0; i<node->children.size; i++)
-        parser_print_r(tree, node->children.data[i], depth+1);
+        parser_print_r(node->children.data[i], depth+1, i==node->children.size-1, newprefix);
+
+    free(newprefix);
 }
 
 void parser_print(parser_tree_t* tree)
 {
     assert(tree);
 
-    parser_print_r(tree, tree->nodes, 0);
+    parser_print_r(tree->nodes, 0, true, "");
 }
