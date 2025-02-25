@@ -20,32 +20,6 @@ void parser_parse_panic(srcfile_t* srcfile, lexer_token_t* tkn, const char* form
     abort();
 }
 
-bool parser_parse_istokendeclspec(lexer_token_t* tkn)
-{
-    switch(tkn->type)
-    {
-    case LEXER_TOKENTYPE_AUTO:
-    case LEXER_TOKENTYPE_REGISTER:
-    case LEXER_TOKENTYPE_STATIC:
-    case LEXER_TOKENTYPE_EXTERN:
-    case LEXER_TOKENTYPE_TYPEDEF:
-    case LEXER_TOKENTYPE_VOID:
-    case LEXER_TOKENTYPE_CHAR:
-    case LEXER_TOKENTYPE_SHORT:
-    case LEXER_TOKENTYPE_INT:
-    case LEXER_TOKENTYPE_LONG:
-    case LEXER_TOKENTYPE_FLOAT:
-    case LEXER_TOKENTYPE_DOUBLE:
-    case LEXER_TOKENTYPE_SIGNED:
-    case LEXER_TOKENTYPE_UNSIGNED:
-    case LEXER_TOKENTYPE_CONST:
-    case LEXER_TOKENTYPE_VOLATILE:
-        return true;
-    default:
-        return false;
-    }
-}
-
 lexer_token_t* parser_parse_consumetoken(srcfile_t* srcfile)
 {
     return &srcfile->lexer.srcstack.data[srcfile->lexer.srcstack.size-1].tokens.data[srcfile->ast.curtok++];
@@ -76,10 +50,55 @@ lexer_token_t* parser_parse_peektoken(srcfile_t* srcfile, int n)
     return &srcfile->lexer.srcstack.data[srcfile->lexer.srcstack.size-1].tokens.data[srcfile->ast.curtok+n];
 }
 
+parser_astnode_t* parser_parse_allocnode(void)
+{
+    parser_astnode_t *node;
+
+    node = malloc(sizeof(parser_astnode_t));
+    memset(node, 0, sizeof(parser_astnode_t));
+
+    return node;
+}
+
+bool parser_parse_typedefexists(srcfile_t* srcfile, const char* name)
+{
+    assert(srcfile);
+
+    return HASHMAP_FETCH(srcfile->ast.typedefs, name) != NULL;
+}
+
+bool parser_parse_istokendeclspec(srcfile_t* srcfile, lexer_token_t* tkn)
+{
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_AUTO:
+    case LEXER_TOKENTYPE_REGISTER:
+    case LEXER_TOKENTYPE_STATIC:
+    case LEXER_TOKENTYPE_EXTERN:
+    case LEXER_TOKENTYPE_TYPEDEF:
+    case LEXER_TOKENTYPE_VOID:
+    case LEXER_TOKENTYPE_CHAR:
+    case LEXER_TOKENTYPE_SHORT:
+    case LEXER_TOKENTYPE_INT:
+    case LEXER_TOKENTYPE_LONG:
+    case LEXER_TOKENTYPE_FLOAT:
+    case LEXER_TOKENTYPE_DOUBLE:
+    case LEXER_TOKENTYPE_SIGNED:
+    case LEXER_TOKENTYPE_UNSIGNED:
+    case LEXER_TOKENTYPE_CONST:
+    case LEXER_TOKENTYPE_VOLATILE:
+        return true;
+    case LEXER_TOKENTYPE_IDENTIFIER:
+        return parser_parse_typedefexists(srcfile, tkn->val);
+    default:
+        return false;
+    }
+}
+
 list_parser_astnode_p_t parser_parse_consumedeclspecs(srcfile_t* srcfile, parser_astnode_t* parent)
 {
     lexer_token_t* curtok;
-    parser_astnode_t *node, *child;
+    parser_astnode_t *node, *inter, *child;
     list_parser_astnode_p_t nodes;
 
     LIST_INITIALIZE(nodes);
@@ -90,14 +109,15 @@ list_parser_astnode_p_t parser_parse_consumedeclspecs(srcfile_t* srcfile, parser
     {
         if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_IDENTIFIER)
         {
-            /* we're at the end of the declspecs */
-            break;
+            /* we're at the end of the declspecs unless it's a typedef */
+            if(!parser_parse_typedefexists(srcfile, parser_parse_peektoken(srcfile, 0)->val))
+                break;
         }
 
-        node = malloc(sizeof(parser_astnode_t));
-        child = malloc(sizeof(parser_astnode_t));
-        memset(node, 0, sizeof(parser_astnode_t));
-        memset(child, 0, sizeof(parser_astnode_t));
+        node = parser_parse_allocnode();
+        child = parser_parse_allocnode();
+        LIST_INITIALIZE(node->children);
+        node->parent = parent;
 
         curtok = parser_parse_consumetoken(srcfile);
         switch(curtok->type)
@@ -111,6 +131,8 @@ list_parser_astnode_p_t parser_parse_consumedeclspecs(srcfile_t* srcfile, parser
             /* storage class specifier */
 
             node->type = PARSER_NODETYPE_STORAGECLASSSPEC;
+            LIST_PUSH(node->children, child);
+            child->parent = node;
 
             break;
         case LEXER_TOKENTYPE_VOID:
@@ -122,11 +144,29 @@ list_parser_astnode_p_t parser_parse_consumedeclspecs(srcfile_t* srcfile, parser
         case LEXER_TOKENTYPE_DOUBLE:
         case LEXER_TOKENTYPE_SIGNED:
         case LEXER_TOKENTYPE_UNSIGNED:
-        /* TODO: type names for structs, unions, enums, and typedefs */
 
             /* type specifier */
 
             node->type = PARSER_NODETYPE_TYPESPEC;
+            LIST_PUSH(node->children, child);
+            child->parent = node;
+
+            break;
+        case LEXER_TOKENTYPE_IDENTIFIER:
+
+            /* type specifier (typedef) */
+
+            node->type = PARSER_NODETYPE_TYPESPEC;
+
+            inter = parser_parse_allocnode();
+            inter->type = PARSER_NODETYPE_TYPENAME;
+            LIST_INITIALIZE(inter->children);
+            inter->parent = node;
+
+            child->parent = inter;
+
+            LIST_PUSH(inter->children, child);
+            LIST_PUSH(node->children, inter);
 
             break;
         case LEXER_TOKENTYPE_CONST:
@@ -135,19 +175,13 @@ list_parser_astnode_p_t parser_parse_consumedeclspecs(srcfile_t* srcfile, parser
             /* type qualifier */
 
             node->type = PARSER_NODETYPE_TYPEQUALIFIER;
+            LIST_PUSH(node->children, child);
+            child->parent = node;
 
             break;
         }
-    
-        LIST_INITIALIZE(node->children);
-        LIST_RESIZE(node->children, 1);
-        node->children.data[0] = child;
-        node->parent = parent;
-        node->token = NULL;
         
-        LIST_INITIALIZE(child->children);
         child->type = PARSER_NODETYPE_TERMINAL;
-        child->parent = node;
         child->token = curtok;
 
         LIST_PUSH(nodes, node);
@@ -167,16 +201,6 @@ char* parser_parse_getdeclaratorname(parser_astnode_t* node)
     assert(directdecl->children.data[0]->type == PARSER_NODETYPE_TERMINAL);
 
     return directdecl->children.data[0]->token->val;
-}
-
-parser_astnode_t* parser_parse_allocnode(void)
-{
-    parser_astnode_t *node;
-
-    node = malloc(sizeof(parser_astnode_t));
-    memset(node, 0, sizeof(parser_astnode_t));
-
-    return node;
 }
 
 parser_astnode_t* parser_parse_expression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
@@ -1050,7 +1074,7 @@ parser_astnode_t* parser_parse_assignmentoperator(srcfile_t* srcfile, parser_ast
     lexer_token_t *tkn;
 
     node = parser_parse_allocnode();
-    node->type = PARSER_NODETYPE_COMPOUNDSTATEMENT;
+    node->type = PARSER_NODETYPE_ASSIGNOP;
     LIST_INITIALIZE(node->children);
     node->parent = parent;
 
@@ -1143,7 +1167,7 @@ parser_astnode_t* parser_parse_expression(srcfile_t* srcfile, parser_astnode_t* 
     lexer_token_t *tkn;
 
     node = parser_parse_allocnode();
-    node->type = PARSER_NODETYPE_ASSIGNEXPR;
+    node->type = PARSER_NODETYPE_EXPR;
     LIST_INITIALIZE(node->children);
     node->parent = parent;
 
@@ -1536,7 +1560,7 @@ parser_astnode_t* parser_parse_compoundstatement(srcfile_t* srcfile, parser_astn
     child->token = tkn;
     LIST_PUSH(node->children, child);
 
-    while(parser_parse_istokendeclspec(parser_parse_peektoken(srcfile, 0)))
+    while(parser_parse_istokendeclspec(srcfile, parser_parse_peektoken(srcfile, 0)))
     {
         if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_EOF)
             parser_parse_panic(srcfile, tkn, "unterminated compound statement");

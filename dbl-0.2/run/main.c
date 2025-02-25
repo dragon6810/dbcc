@@ -14,6 +14,8 @@ int main(int argc, char** argv)
     char *str = "my string \
                  is cool.";
 
+    int32_t typetest;
+
     #ifndef MY_DEFINE
         #ifdef OTHER_DEFINE
             int thisshouldnthappen;
