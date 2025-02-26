@@ -130,6 +130,7 @@ static void lexer_initialprocessing_mergelines(lexer_state_t* state)
         curline->str = newstr;
 
         LIST_REMOVE(stacktop->lines, i + 1);
+        i--;
     }
 }
 

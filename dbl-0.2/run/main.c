@@ -1,9 +1,9 @@
 #include "incfile.h"
 #include "otherincfile.h"
 
-/* #include <string.h> */
+/*#include <string.h>*/
 
-#define MY_DEFINE (6 + 13 * 4)
+#define MY_DEFINE (6 + 13 * 4) 
 
 typedef int int32_t;
 typedef float vec3_t[3];
@@ -18,7 +18,8 @@ int main(int argc, char** argv)
     int x;
     char c;
     char *str = "my string \
-                 is cool.";
+                 is cool.\
+                 ";
 
     int32_t typetest;
     vec3_t vector;
