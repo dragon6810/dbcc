@@ -6,6 +6,12 @@
 #define MY_DEFINE (6 + 13 * 4)
 
 typedef int int32_t;
+typedef float vec3_t[3];
+
+int muliargfunc(int a, float b, int32_t c)
+{
+    return a + c;
+}
 
 int main(int argc, char** argv)
 {
@@ -15,6 +21,7 @@ int main(int argc, char** argv)
                  is cool.";
 
     int32_t typetest;
+    vec3_t vector;
 
     #ifndef MY_DEFINE
         #ifdef OTHER_DEFINE
@@ -37,6 +44,9 @@ int main(int argc, char** argv)
      * comment
      * cool
     */x += MY_DEFINE;
+    x -= nextfun(3.0);
+    x += muliargfunc(x, 42.7, 9);
+
     c = '3';
     c = '\n';
 

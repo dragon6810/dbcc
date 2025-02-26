@@ -207,6 +207,8 @@ parser_astnode_t* parser_parse_expression(srcfile_t* srcfile, parser_astnode_t* 
 parser_astnode_t* parser_parse_declarator(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
 parser_astnode_t* parser_parse_compoundstatement(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
 parser_astnode_t* parser_parse_castexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
+parser_astnode_t* parser_parse_constantexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
+parser_astnode_t* parser_parse_assignmentexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
 
 /*
     <parameter-declaration> ::= {<declaration-specifier>}+ <declarator>
@@ -364,7 +366,7 @@ parser_astnode_t* parser_parse_directdeclarator(srcfile_t* srcfile, parser_astno
         parser_parse_panic(srcfile, tkn, "expected '(' or identifier");
     }
 
-    if
+    while
     (
         parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_OPENPARENTH || 
         parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_OPENBRACKET
@@ -391,8 +393,24 @@ parser_astnode_t* parser_parse_directdeclarator(srcfile_t* srcfile, parser_astno
             
             break;
         case LEXER_TOKENTYPE_OPENBRACKET:
+            term = parser_parse_allocnode();
+            term->type = PARSER_NODETYPE_TERMINAL;
+            term->parent = node;
+            term->token = tkn;
+            LIST_PUSH(node->children, term);
 
-            parser_parse_panic(srcfile, tkn, "TODO: <direct-declarator> [ {<constant-expression>}? ]");
+            if(parser_parse_peektoken(srcfile, 0)->type != LEXER_TOKENTYPE_CLOSEBRACKET)
+            {
+                child = parser_parse_constantexpression(srcfile, node, panic);
+                LIST_PUSH(node->children, child);
+            }
+
+            tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_CLOSEBRACKET);
+            term = parser_parse_allocnode();
+            term->type = PARSER_NODETYPE_TERMINAL;
+            term->parent = node;
+            term->token = tkn;
+            LIST_PUSH(node->children, term);
 
             break;
         default:
@@ -578,6 +596,38 @@ parser_astnode_t* parser_parse_postfixexpression(srcfile_t* srcfile, parser_astn
     case LEXER_TOKENTYPE_INCREMENT:
     case LEXER_TOKENTYPE_DECREMENT:
         tkn = parser_parse_consumetoken(srcfile);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        break;
+    case LEXER_TOKENTYPE_OPENPARENTH:
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_OPENPARENTH);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        while(true)
+        {
+            child = parser_parse_assignmentexpression(srcfile, node, panic);
+            LIST_PUSH(node->children, child);
+
+            if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_CLOSEPARENTH)
+                break;
+
+            tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_COMMA);
+            child = parser_parse_allocnode();
+            child->type = PARSER_NODETYPE_TERMINAL;
+            child->parent = node;
+            child->token = tkn;
+            LIST_PUSH(node->children, child);
+        }
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_CLOSEPARENTH);
         child = parser_parse_allocnode();
         child->type = PARSER_NODETYPE_TERMINAL;
         child->parent = node;
@@ -1051,6 +1101,24 @@ parser_astnode_t* parser_parse_conditionalexpression(srcfile_t* srcfile, parser_
         parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), 
                            "TODO: <conditional-expression> ::= \
                            <logical-or-expression> ? <expression> : <conditional-expression>");
+
+    return node;
+}
+
+/*
+    <constant-expression> ::= <conditional-expression>
+*/
+parser_astnode_t* parser_parse_constantexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
+{
+    parser_astnode_t *node, *child;
+
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_CONSTEXPR;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    child = parser_parse_conditionalexpression(srcfile, node, panic);
+    LIST_PUSH(node->children, child);
 
     return node;
 }
