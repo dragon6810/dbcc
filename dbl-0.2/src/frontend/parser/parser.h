@@ -119,5 +119,7 @@ struct parser_typedef_s
 void parser_parse(struct srcfile_s* srcfile);
 void parser_freenode(parser_astnode_t* node);
 void parser_print(parser_tree_t* tree);
+void parser_writemermaid(parser_tree_t* tree, const char* path);
+void parser_typetostr(parser_nodetype_e type, char* out);
 
 #endif
