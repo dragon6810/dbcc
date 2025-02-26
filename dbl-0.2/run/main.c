@@ -45,7 +45,8 @@ int main(int argc, char** argv)
      * cool
     */x += MY_DEFINE;
     x -= nextfun(3.0);
-    x += muliargfunc(x, 42.7, 9);
+    vector[0] = 42.7;
+    x += muliargfunc(x, vector[0], 9);
 
     c = '3';
     c = '\n';

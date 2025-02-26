@@ -635,6 +635,25 @@ parser_astnode_t* parser_parse_postfixexpression(srcfile_t* srcfile, parser_astn
         LIST_PUSH(node->children, child);
 
         break;
+    case LEXER_TOKENTYPE_OPENBRACKET:
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_OPENBRACKET);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        child = parser_parse_expression(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_CLOSEBRACKET);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        break;
     default:
         break;
     }
