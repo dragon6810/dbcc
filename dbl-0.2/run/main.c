@@ -35,6 +35,8 @@ int main(int argc, char** argv)
 
     /* heres a one-line comment */
 
+    @
+
     x = 0;
     x +=/* com */3;
     x *= -1;

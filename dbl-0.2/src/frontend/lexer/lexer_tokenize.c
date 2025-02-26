@@ -175,6 +175,8 @@ static int lexer_tokenize_doestokenmatch(char* str, lexer_tokentype_e type)
         return lexer_tokenize_isidentifier(str);
     if(type == LEXER_TOKENTYPE_CONSTANT)
         return lexer_tokenize_isconstant(str);
+    if(type == LEXER_TOKENTYPE_OTHER)
+        return 1;
 
     lexer_tkntypetostring(type, tknstr);
     if(strlen(str) < strlen(tknstr))

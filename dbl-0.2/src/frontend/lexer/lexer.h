@@ -26,7 +26,7 @@
     #define LEXER_TOKENTYPE_STARTOFDYNAMICS LEXER_TOKENTYPE_STRING
     #define LEXER_TOKENTYPE_ENDOFDYNAMICS LEXER_TOKENTYPE_CONSTANT
 
-#define LEXER_TOKENTYPE_ENDOFENUM LEXER_TOKENTYPE_CONSTANT
+#define LEXER_TOKENTYPE_ENDOFENUM LEXER_TOKENTYPE_OTHER
 
 /*
  * ================================
@@ -68,9 +68,6 @@ typedef enum
 
     /* EOF */
     LEXER_TOKENTYPE_EOF,
-
-    /* OTHER */
-    LEXER_TOKENTYPE_OTHER,
     
     /* Puncuation */
     LEXER_TOKENTYPE_OPENBRACKET,  /* [   */
@@ -168,6 +165,9 @@ typedef enum
     LEXER_TOKENTYPE_CHARCONSTANT, /* '[character]'    */
     LEXER_TOKENTYPE_IDENTIFIER,   /* [identifier]     */
     LEXER_TOKENTYPE_CONSTANT,     /* [constant]       */
+
+    /* OTHER */
+    LEXER_TOKENTYPE_OTHER,
 } lexer_tokentype_e;
 
 struct lexer_token_s
