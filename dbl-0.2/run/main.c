@@ -35,7 +35,13 @@ int main(int argc, char** argv)
 
     /* heres a one-line comment */
 
-    @
+    if(str)
+        x++;
+    else
+        x--;
+        
+    while(x)
+        x--;
 
     x = 0;
     x +=/* com */3;

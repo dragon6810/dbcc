@@ -209,6 +209,7 @@ parser_astnode_t* parser_parse_compoundstatement(srcfile_t* srcfile, parser_astn
 parser_astnode_t* parser_parse_castexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
 parser_astnode_t* parser_parse_constantexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
 parser_astnode_t* parser_parse_assignmentexpression(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
+parser_astnode_t* parser_parse_statement(srcfile_t* srcfile, parser_astnode_t* parent, bool panic);
 
 /*
     <parameter-declaration> ::= {<declaration-specifier>}+ <declarator>
@@ -1361,18 +1362,135 @@ parser_astnode_t* parser_parse_jumpstatement(srcfile_t* srcfile, parser_astnode_
     return node;
 }
 
+/*
+    <iteration-statement> ::= while ( <expression> ) <statement>
+                            | do <statement> while ( <expression> ) ;
+                            | for ( {<expression>}? ; {<expression>}? ; {<expression>}? ) <statement>
+*/
 parser_astnode_t* parser_parse_iterationstatement(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
 {
-    parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "TODO: <iteration-statement>");
+    parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
 
-    return NULL;
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_ITERATIONSTATEMENT;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    tkn = parser_parse_consumetoken(srcfile);
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_WHILE:
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_OPENPARENTH);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        child = parser_parse_expression(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_CLOSEPARENTH);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        child = parser_parse_statement(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+
+        break;
+    case LEXER_TOKENTYPE_DO:
+        parser_parse_panic(srcfile, tkn, "TODO: <iteration-statement> ::= do <statement> while ( <expression> ) ;");
+
+        break;
+    case LEXER_TOKENTYPE_FOR:
+        parser_parse_panic(srcfile, tkn, "TODO: <iteration-statement> ::= for ( {<expression>}? ; {<expression>}? ; {<expression>}? ) <statement>");
+
+        break;
+    default:
+        parser_parse_panic(srcfile, tkn, "expected iteration statement");
+    }
+
+    return node;
 }
 
+/*
+    <selection-statement> ::= if ( <expression> ) <statement>
+                            | if ( <expression> ) <statement> else <statement>
+                            | switch ( <expression> ) <statement>
+*/
 parser_astnode_t* parser_parse_selectionstatement(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
 {
-    parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "TODO: <selection-statement>");
+    parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
 
-    return NULL;
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_SELECTIONSTATEMENT;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    tkn = parser_parse_consumetoken(srcfile);
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_IF:
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_OPENPARENTH);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        child = parser_parse_expression(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+
+        tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_CLOSEPARENTH);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        child = parser_parse_statement(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+
+        if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_ELSE)
+        {
+            tkn = parser_parse_expecttoken(srcfile, LEXER_TOKENTYPE_ELSE);
+            child = parser_parse_allocnode();
+            child->type = PARSER_NODETYPE_TERMINAL;
+            child->parent = node;
+            child->token = tkn;
+            LIST_PUSH(node->children, child);
+
+            child = parser_parse_statement(srcfile, node, panic);
+            LIST_PUSH(node->children, child);
+        }
+
+        break;
+    case LEXER_TOKENTYPE_SWITCH:
+        parser_parse_panic(srcfile, tkn, "TODO: <selection-statement> ::= switch ( <expression> ) <statement>");
+
+        break;
+    default:
+        parser_parse_panic(srcfile, tkn, "expected selection statement");
+    }
+
+    return node;
 }
 
 /*
@@ -1676,7 +1794,7 @@ parser_astnode_t* parser_parse_compoundstatement(srcfile_t* srcfile, parser_astn
 }
 
 /*
-    <function-definition> ::= {<declaration-specifier>}* <declarator> <compound-statement>
+    <function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
                                                                       ^ we start here in this function
 */
 parser_astnode_t* parser_parse_functiondefinition(srcfile_t* srcfile, parser_astnode_t* parent, list_parser_astnode_p_t declspecs, parser_astnode_t* declarator, bool panic)
@@ -1705,6 +1823,12 @@ parser_astnode_t* parser_parse_functiondefinition(srcfile_t* srcfile, parser_ast
     }
 
     LIST_PUSH(node->children, declarator);
+
+    while(parser_parse_peektoken(srcfile, 0)->type != LEXER_TOKENTYPE_OPENBRACE)
+    {
+        child = parser_parse_declaration(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+    }
 
     child = parser_parse_compoundstatement(srcfile, node, panic);
     LIST_PUSH(node->children, child);
