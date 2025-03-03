@@ -79,6 +79,8 @@ hashmap_initialize                                     \
 
 #define HASHMAP_FREE(hashmap) hashmap_free((hashmap_template_t*)&(hashmap))
 
+#define HASHMAP_EXECFORALL(hashmap, routine) hashmap_execforall((hashmap_template_t*)&(hashmap), ((void(*)(void*))(routine)))
+
 /*
  * ================================
  *        TYPES DEFENITIONS
@@ -126,5 +128,6 @@ void* hashmap_fetch(hashmap_template_t* hashmap, void* key);
 void* hashmap_set(hashmap_template_t* hashmap, void* key, void* val);
 bool hashmap_remove(hashmap_template_t* hashmap, void* key);
 void hashmap_free(hashmap_template_t* hashmap);
+void hashmap_execforall(hashmap_template_t* hashmap, void (*routine)(void*));
 
 #endif

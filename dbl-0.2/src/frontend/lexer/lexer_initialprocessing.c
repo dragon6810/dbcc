@@ -5,9 +5,9 @@
 #include <cli/cli.h>
 #include <std/assert/assert.h>
 #include <std/profiler/profiler.h>
-#include <textutils/textutils.h>
+#include <std/textutils/textutils.h>
 
-void lexer_initialprocessing_cullcomments(lexer_state_t* state)
+static void lexer_initialprocessing_cullcomments(lexer_state_t* state)
 {
     int i, j;
     lexer_line_t *curline;
