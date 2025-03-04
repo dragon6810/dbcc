@@ -11,6 +11,7 @@ struct arena_s
 
 void arena_initialize(arena_t* arena, unsigned long int size);
 void* arena_alloc(arena_t* arena, unsigned long int size);
+void arena_reset(arena_t* arena);
 void arena_free(arena_t* arena);
 
 #endif

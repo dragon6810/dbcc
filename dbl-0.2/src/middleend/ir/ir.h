@@ -12,6 +12,7 @@ typedef struct ir_translationunit_s ir_translationunit_t;
 typedef struct ir_instruction_s ir_instruction_t;
 typedef union ir_instruction_param_u ir_instruction_param_t;
 typedef struct ir_instruction_param_value_s ir_instruction_param_value_t;
+typedef struct ir_label_s ir_label_t;
 
 typedef enum
 {
@@ -39,11 +40,18 @@ typedef enum
 } ir_instructiontype_e;
 
 LIST_TYPE(ir_instruction_t, list_ir_instruction)
+HASHMAP_TYPE_DECL(char*, ir_label_t, string_ir_label)
 
 struct ir_translationunit_s
 {
-    hashmap_string_int64_t labels;
-    ir_instruction_t* instructions;
+    hashmap_string_ir_label_t labels;
+    ir_instruction_t *instructions;
+};
+
+struct ir_label_s
+{
+    char *name;
+    ir_instruction_t *instruction;
 };
 
 /*

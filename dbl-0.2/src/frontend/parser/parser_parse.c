@@ -263,6 +263,9 @@ parser_astnode_t* parser_parse_parameterlist(srcfile_t* srcfile, parser_astnode_
     LIST_INITIALIZE(node->children);
     node->parent = parent;
 
+    if(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_CLOSEPARENTH)
+        return node;
+        
     child = parser_parse_parameterdeclaration(srcfile, node, panic);
     LIST_PUSH(node->children, child);
     while(parser_parse_peektoken(srcfile, 0)->type == LEXER_TOKENTYPE_COMMA)
@@ -1920,7 +1923,9 @@ void parser_parse(struct srcfile_s* srcfile)
 
     HASHMAP_INITIALIZE(srcfile->ast.typedefs, HASHMAP_BUCKETS_LARGE, string_parser_typedef);
     srcfile->ast.nodes = parser_parse_translationunit(srcfile, true);
-    parser_print(&srcfile->ast);
+    
+    if(cli_verbose)
+        parser_print(&srcfile->ast);
     
     profiler_pop();
 }
