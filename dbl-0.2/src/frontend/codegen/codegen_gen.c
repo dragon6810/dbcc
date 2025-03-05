@@ -47,6 +47,57 @@ void codegen_gen_expectnodetype(parser_astnode_t* node, parser_nodetype_e type)
 
 ir_instruction_t* codegen_gen_node(srcfile_t* srcfile, parser_astnode_t* node, ir_instruction_t* latestir);
 
+ir_instruction_t* codegen_gen_compoundstatement(srcfile_t* srcfile, parser_astnode_t* node, bool fun, ir_instruction_t* latestir)
+{
+    ir_instruction_t* ir;
+
+    assert(srcfile);
+    assert(node);
+
+    if(fun)
+    {
+        ir = calloc(1, sizeof(ir_instruction_t));
+        ir->opcode = IR_INSTRUCTIONTYPE_RET;
+        ir->params[0].value.type = IR_INSTRUCTION_PARAM_VALUE_TYPE_VOID;
+        ir->params[0].value.flags |= IR_INSTRUCTION_PARAM_VALUE_FLAGS_STORAGECONSTANT 
+                                   & IR_INSTRUCTION_PARAM_VALUE_FLAGS_STORAGEBITS;
+
+        if(latestir)
+            latestir->next = ir;
+        else
+            latestir = srcfile->ir.instructions = ir;
+        ir->last = latestir;
+
+        latestir = ir;
+    }
+
+    return latestir;
+}
+
+ir_instruction_t* codegen_gen_functiondefinition(srcfile_t* srcfile, parser_astnode_t* node, ir_instruction_t* latestir)
+{
+    int i;
+
+    assert(srcfile);
+    assert(node);
+
+    for(i=0; i<node->children.size; i++)
+    {
+        switch(node->children.data[i]->type)
+        {
+        case PARSER_NODETYPE_COMPOUNDSTATEMENT:
+            latestir = codegen_gen_compoundstatement(srcfile, node->children.data[i], true, latestir);
+        case PARSER_NODETYPE_DECLSPEC:
+        case PARSER_NODETYPE_DECLARATOR:
+            break;
+        default:
+            codegen_gen_panic(node->children.data[i], "expected declaration or function definition");
+        }
+    }
+
+    return latestir;
+}
+
 ir_instruction_t* codegen_gen_externaldeclaration(srcfile_t* srcfile, parser_astnode_t* node, ir_instruction_t* latestir)
 {
     int i;
@@ -101,6 +152,9 @@ ir_instruction_t* codegen_gen_node(srcfile_t* srcfile, parser_astnode_t* node, i
         break;
     case PARSER_NODETYPE_EXTERNALDECL:
         return codegen_gen_externaldeclaration(srcfile, node, latestir);
+        break;
+    case PARSER_NODETYPE_FUNCTIONDEF:
+        return codegen_gen_functiondefinition(srcfile, node, latestir);
         break;
     default:
         parser_typetostr(node->type, name);

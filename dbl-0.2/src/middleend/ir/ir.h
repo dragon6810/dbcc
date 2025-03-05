@@ -6,7 +6,13 @@
 #include <std/list/list.h>
 
 #define IR_MAXPARAMS 4
-#define IR_WORDSIZE
+
+#define IR_INSTRUCTION_PARAM_VALUE_FLAGS_STORAGEBITS 0x7
+#define IR_INSTRUCTION_PARAM_VALUE_FLAGS_STORAGEINVALID 0
+#define IR_INSTRUCTION_PARAM_VALUE_FLAGS_STORAGEREGISTER 1
+#define IR_INSTRUCTION_PARAM_VALUE_FLAGS_STORAGEADDRESS 2
+#define IR_INSTRUCTION_PARAM_VALUE_FLAGS_STORAGEINDIRECT 3
+#define IR_INSTRUCTION_PARAM_VALUE_FLAGS_STORAGECONSTANT 4
 
 typedef struct ir_translationunit_s ir_translationunit_t;
 typedef struct ir_instruction_s ir_instruction_t;
@@ -16,6 +22,11 @@ typedef struct ir_label_s ir_label_t;
 
 typedef enum
 {
+    /* Metadata */
+    IR_INSTRUCTIONTYPE_SALLOC, /* stack alloc: ident name, type type */
+    IR_INSTRUCTIONTYPE_DALLOC, /* data alloc: ident name, type type, value initval */
+
+    /* Instructions */
     IR_INSTRUCTIONTYPE_ADD,
     IR_INSTRUCTIONTYPE_SUB,
     IR_INSTRUCTIONTYPE_INC,
@@ -39,6 +50,21 @@ typedef enum
     IR_INSTRUCTIONTYPE_JGE,
 } ir_instructiontype_e;
 
+typedef enum
+{
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_VOID,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_I8,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_U8,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_I16,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_U16,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_I32,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_U32,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_I64,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_U64,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_F32,
+    IR_INSTRUCTION_PARAM_VALUE_TYPE_F64,
+} ir_instruction_param_value_type_e;
+
 LIST_TYPE(ir_instruction_t, list_ir_instruction)
 HASHMAP_TYPE_DECL(char*, ir_label_t, string_ir_label)
 
@@ -54,13 +80,10 @@ struct ir_label_s
     ir_instruction_t *instruction;
 };
 
-/*
-    flags:
-        bits 0-2: type - 0 is register, 1 is memory address, 2 is constant value
-*/
 struct ir_instruction_param_value_s
 {
     unsigned char flags;
+    ir_instruction_param_value_type_e type;
     union
     {
         char i8;
