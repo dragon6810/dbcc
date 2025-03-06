@@ -516,6 +516,43 @@ cleanupfail:
 }
 
 /*
+    <constant> ::= <integer-constant>
+                 | <character-constant>
+                 | <floating-constant>
+                 | <enumeration-constant>
+*/
+parser_astnode_t* parser_parse_constant(srcfile_t* srcfile, parser_astnode_t* parent, bool panic)
+{
+    parser_astnode_t *node, *child;
+    lexer_token_t *tkn;
+
+    node = parser_parse_allocnode();
+    node->type = PARSER_NODETYPE_CONSTANT;
+    LIST_INITIALIZE(node->children);
+    node->parent = parent;
+
+    tkn = parser_parse_peektoken(srcfile, 0);
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_INTCONSTANT:
+    case LEXER_TOKENTYPE_CHARCONSTANT:
+    case LEXER_TOKENTYPE_FLOATCONSTANT:
+        tkn = parser_parse_consumetoken(srcfile);
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_TERMINAL;
+        child->parent = node;
+        child->token = tkn;
+        LIST_PUSH(node->children, child);
+
+        break;
+    default:
+        parser_parse_panic(srcfile, tkn, "expected constant");
+    }
+
+    return node;
+}
+
+/*
     <primary-expression> ::= <identifier>
                            | <constant>
                            | <string>
@@ -531,12 +568,11 @@ parser_astnode_t* parser_parse_primaryexpression(srcfile_t* srcfile, parser_astn
     LIST_INITIALIZE(node->children);
     node->parent = parent;
 
-    switch((tkn = parser_parse_consumetoken(srcfile))->type)
+    switch((tkn = parser_parse_peektoken(srcfile, 0))->type)
     {
     case LEXER_TOKENTYPE_IDENTIFIER:
-    case LEXER_TOKENTYPE_CONSTANT:
-    case LEXER_TOKENTYPE_CHARCONSTANT:
     case LEXER_TOKENTYPE_STRING:
+        tkn = parser_parse_consumetoken(srcfile);
         child = parser_parse_allocnode();
         child->type = PARSER_NODETYPE_TERMINAL;
         child->parent = node;
@@ -544,7 +580,15 @@ parser_astnode_t* parser_parse_primaryexpression(srcfile_t* srcfile, parser_astn
         LIST_PUSH(node->children, child);
         
         break;
+    case LEXER_TOKENTYPE_INTCONSTANT:
+    case LEXER_TOKENTYPE_CHARCONSTANT:
+    case LEXER_TOKENTYPE_FLOATCONSTANT:
+        child = parser_parse_constant(srcfile, node, panic);
+        LIST_PUSH(node->children, child);
+
+        break;
     case LEXER_TOKENTYPE_OPENPARENTH:
+        tkn = parser_parse_consumetoken(srcfile);
         child = parser_parse_allocnode();
         child->type = PARSER_NODETYPE_TERMINAL;
         child->parent = node;

@@ -273,14 +273,17 @@ int lexer_tkntypetostring(lexer_tokentype_e type, char* name)
     case LEXER_TOKENTYPE_ANGLESTRING:
         strcpy(str, "angle string");
         break;
-    case LEXER_TOKENTYPE_CHARCONSTANT:
-        strcpy(str, "character");
-        break;
     case LEXER_TOKENTYPE_IDENTIFIER:
         strcpy(str, "identifier");
         break;
-    case LEXER_TOKENTYPE_CONSTANT:
-        strcpy(str, "constant");
+    case LEXER_TOKENTYPE_CHARCONSTANT:
+        strcpy(str, "character constant");
+        break;
+    case LEXER_TOKENTYPE_INTCONSTANT:
+        strcpy(str, "integer constant");
+        break;
+    case LEXER_TOKENTYPE_FLOATCONSTANT:
+        strcpy(str, "floating point constant");
         break;
     default:
         str[0] = 0;

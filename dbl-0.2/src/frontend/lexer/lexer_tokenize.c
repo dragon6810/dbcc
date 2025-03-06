@@ -9,42 +9,62 @@
 #include <std/profiler/profiler.h>
 #include <std/textutils/textutils.h>
 
-static bool lexer_tokenize_ischarallowedinconstant(char c, bool hex)
-{
-    if(MATH_INRANGE(c, '0', '9'))
-        return true;
-    if(hex && MATH_INRANGE(c, 'a', 'f'))
-        return true;
-    if(hex && MATH_INRANGE(c, 'A', 'F'))
-        return true;
-
-    if(c == '.' || c == 'f' || c == 'F')
-        return true;
-
-    return false;
-}
-
-static int lexer_tokenize_isconstant(char* str)
+static int lexer_tokenize_isintconstant(char* str)
 {
     char *beginning;
-    bool hex;
 
     if(!str)
         return 0;
     if(!*str)
         return 0;
 
-    hex = false;
-    if(strlen(str) >= 2 && (!strncmp(str, "0x", 2) || !strncmp(str, "0X", 2)))
-    {
-        hex = true;
-        str += 2;
-    }
-
     beginning = str;
-    while(lexer_tokenize_ischarallowedinconstant(*str, hex))
+    while(MATH_INRANGE(*str, '0', '9'))
         str++;
 
+    return str - beginning;
+}
+
+static int lexer_tokenize_isfloatconstant(char* str)
+{
+    char *beginning;
+    bool hitdecimal;
+
+    if(!str)
+        return 0;
+    if(!*str)
+        return 0;
+
+    beginning = str;
+    hitdecimal = false;
+    while(true)
+    {
+        if((*str == 'f' || *str == 'F') && hitdecimal)
+        {
+            str++;
+            break;
+        }
+
+        if(*str == '.')
+        {
+            if(hitdecimal)
+                break;
+            hitdecimal = true;
+
+            str++;
+            continue;
+        }
+
+        if(!*str)
+            break;
+
+        if(!MATH_INRANGE(*str, '0', '9'))
+            break;
+
+        str++;
+    }
+
+    printf("got %lu\n", str - beginning);
     return str - beginning;
 }
 
@@ -169,12 +189,14 @@ static int lexer_tokenize_doestokenmatch(char* str, lexer_tokentype_e type)
         return lexer_tokenize_isstring(str);
     if(type == LEXER_TOKENTYPE_ANGLESTRING)
         return lexer_tokenize_isanglestring(str);
-    if(type == LEXER_TOKENTYPE_CHARCONSTANT)
-        return lexer_tokenize_ischarconstant(str);
     if(type == LEXER_TOKENTYPE_IDENTIFIER)
         return lexer_tokenize_isidentifier(str);
-    if(type == LEXER_TOKENTYPE_CONSTANT)
-        return lexer_tokenize_isconstant(str);
+    if(type == LEXER_TOKENTYPE_CHARCONSTANT)
+        return lexer_tokenize_ischarconstant(str);
+    if(type == LEXER_TOKENTYPE_INTCONSTANT)
+        return lexer_tokenize_isintconstant(str);
+    if(type == LEXER_TOKENTYPE_FLOATCONSTANT)
+        return lexer_tokenize_isfloatconstant(str);
     if(type == LEXER_TOKENTYPE_OTHER)
         return 1;
 
@@ -258,6 +280,9 @@ static bool lexer_tokenize_tokenizeline(lexer_state_t* state, unsigned long int 
     char type[LEXER_MAXHARDTOKENLEN];
     unsigned long int column, linelen;
 
+    assert(state);
+    assert(state->srcstack.size);
+
     stacktop = &state->srcstack.data[state->srcstack.size - 1];
     assert(line < stacktop->lines.size);
     pline = &stacktop->lines.data[line];
@@ -314,6 +339,9 @@ bool lexer_tokenize(lexer_state_t* state)
     int i;
 
     lexer_statesrcel_t *stacktop;
+
+    assert(state);
+    assert(state->srcstack.size);
 
     profiler_push("Lex File: Tokenize");
 
