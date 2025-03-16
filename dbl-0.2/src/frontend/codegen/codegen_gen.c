@@ -47,8 +47,54 @@ void codegen_gen_expectnodetype(parser_astnode_t* node, parser_nodetype_e type)
 
 ir_instruction_t* codegen_gen_node(srcfile_t* srcfile, parser_astnode_t* node, ir_instruction_t* latestir);
 
+ir_instruction_t* codegen_gen_declaration(srcfile_t* srcfile, parser_astnode_t* node, ir_instruction_t* latestir)
+{
+    assert(srcfile);
+    assert(node);
+
+    codegen_gen_panic(node, "Codegen nodetype TODO: \"declaration\"");
+
+    return latestir;
+}
+
+ir_instruction_t* codegen_gen_jumpstatement(srcfile_t* srcfile, parser_astnode_t* node, ir_instruction_t* latestir)
+{
+    assert(srcfile);
+    assert(node);
+
+    switch(node->children.data[0]->token->type)
+    {
+    case LEXER_TOKENTYPE_RETURN:
+        break;
+    }
+
+    return latestir;
+}
+
+ir_instruction_t* codegen_gen_statement(srcfile_t* srcfile, parser_astnode_t* node, ir_instruction_t* latestir)
+{
+    char name[LEXER_MAXHARDTOKENLEN];
+
+    assert(srcfile);
+    assert(node);
+
+    switch(node->children.data[0]->type)
+    {
+    case PARSER_NODETYPE_JUMPSTATEMENT:
+        latestir = codegen_gen_jumpstatement(srcfile, node->children.data[0], latestir);
+        break;
+    default:
+        parser_typetostr(node->children.data[0]->type, name);
+        codegen_gen_panic(node, "Codegen nodetype TODO: \"%s\"", name);
+    }
+
+    return latestir;
+}
+
 ir_instruction_t* codegen_gen_compoundstatement(srcfile_t* srcfile, parser_astnode_t* node, bool fun, ir_instruction_t* latestir)
 {
+    int i;
+
     ir_instruction_t* ir;
 
     assert(srcfile);
@@ -69,6 +115,21 @@ ir_instruction_t* codegen_gen_compoundstatement(srcfile_t* srcfile, parser_astno
         ir->last = latestir;
 
         latestir = ir;
+    }
+
+    for(i=0; i<node->children.size; i++)
+    {
+    switch(node->children.data[i]->type)
+    {
+    case PARSER_NODETYPE_DECL:
+        latestir = codegen_gen_declaration(srcfile, node->children.data[i], latestir);
+        break;
+    case PARSER_NODETYPE_STATEMENT:
+        latestir = codegen_gen_statement(srcfile, node->children.data[i], latestir);
+        break;
+    default:
+        break;
+    }
     }
 
     return latestir;

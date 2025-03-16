@@ -35,7 +35,7 @@ endif
 
 all: mkdirs $(BIN_FILE)
 preprocessed: mkdirs $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.i, $(SRC_FILE))
-ir: mkdirs $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.ir, $(SRC_FILE))
+ir: mkdirs $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.ll, $(SRC_FILE))
 
 mkdirs:
 	@mkdir -p $(BIN_DIR)
@@ -52,7 +52,7 @@ $(OBJ_DIR)/%.i: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CC_FLAGS) -E $< -o $@
 
-$(OBJ_DIR)/%.ir: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.ll: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CC_FLAGS) -flto -S $< -o $@
 
