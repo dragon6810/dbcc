@@ -4,7 +4,7 @@
 
 #include <std/assert/assert.h>
 
-void ir_print_printvalue(ir_instruction_param_value_t* val)
+void ir_print_printvalue(ir_value_t* val)
 {
     assert(val);
 
