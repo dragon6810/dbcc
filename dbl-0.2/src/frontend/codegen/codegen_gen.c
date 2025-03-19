@@ -1,5 +1,7 @@
 #include <frontend/codegen/codegen.h>
 
+#include <string.h>
+
 #include <cli/cli.h>
 #include <std/assert/assert.h>
 #include <std/profiler/profiler.h>
@@ -39,15 +41,171 @@ void codegen_gen_expectnodetype(parser_astnode_t* node, parser_nodetype_e type)
     if(node->type == type)
         return;
 
-    parser_typetostr(node->type, name);
+    parser_typetostr(type, name);
     codegen_gen_panic(node, "expected %s", name);
 
     abort();
 }
 
+bool codegen_gen_isdeclaratorfuncdecl(srcfile_t* srcfile, parser_astnode_t* declarator)
+{
+    parser_astnode_t *direct;
+
+    assert(srcfile);
+    assert(declarator);
+    assert(declarator->type == PARSER_NODETYPE_DECLARATOR);
+
+    direct = declarator->children.data[declarator->children.size-1];
+    codegen_gen_expectnodetype(direct, PARSER_NODETYPE_DIRECTDECL);
+
+    if(direct->children.size < 2)
+        return false;
+
+    if(direct->children.data[1]->type != PARSER_NODETYPE_TERMINAL)
+        return false;
+
+    if(direct->children.data[1]->token->type != LEXER_TOKENTYPE_OPENPARENTH)
+        return false;
+
+    return true;
+}
+
+void codegen_gen_functiondeclaration(srcfile_t* srcfile, parser_astnode_t* node)
+{
+    int i;
+
+    parser_astnode_t *typespec, *initdecl, *declarator, *directdecl;
+    lexer_token_t *tkn;
+    ir_declordef_t declordef;
+    ir_declaration_t *decl;
+
+    assert(srcfile);
+    assert(node);
+    assert(node->type == PARSER_NODETYPE_DECL);
+
+    memset(&declordef, 0, sizeof(declordef));
+
+    declordef.isdef = false;
+    decl = &declordef.decl;
+
+    decl->type = IR_DECLARATIONTYPE_FUNCTION;
+
+    for(i=0, typespec=NULL; i<node->children.size; i++)
+    {
+        if(node->children.data[i]->type != PARSER_NODETYPE_DECLSPEC)
+            break;
+
+        if(node->children.data[i]->children.data[0]->type != PARSER_NODETYPE_TYPESPEC)
+            continue;
+
+        typespec = node->children.data[i]->children.data[0];
+    }
+
+    if(!typespec)
+    {
+        tkn = codegen_gen_getfirsttokenofnode(node->children.data[i]);
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "expected type specifier");
+    }
+
+    if(typespec->children.data[0]->type != PARSER_NODETYPE_TERMINAL)
+    {
+        tkn = codegen_gen_getfirsttokenofnode(typespec->children.data[0]);
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "unsupported type specifier");
+    }
+
+    tkn = typespec->children.data[0]->token;
+
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_INT:
+        decl->function.type.type = IR_TYPE_I32;
+        decl->function.type.name = strdup("i32");
+
+        break;
+    default:
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "unsupported type specifier");
+    }
+
+    puts("got here");
+    puts("and here");
+    codegen_gen_expectnodetype(node->children.data[i], PARSER_NODETYPE_INITDECL);
+    initdecl = node->children.data[i];
+    codegen_gen_expectnodetype(initdecl->children.data[0], PARSER_NODETYPE_DECLARATOR);
+    declarator = initdecl->children.data[0];
+    codegen_gen_expectnodetype(declarator->children.data[declarator->children.size-1], PARSER_NODETYPE_DIRECTDECL);
+    directdecl = declarator->children.data[declarator->children.size-1];
+
+    codegen_gen_expectnodetype(directdecl->children.data[0], PARSER_NODETYPE_TERMINAL);
+    tkn = directdecl->children.data[0]->token;
+    if(tkn->type != LEXER_TOKENTYPE_IDENTIFIER)
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "expected identifier");
+
+    decl->function.name = malloc(1 + strlen(tkn->val) + 1);
+    strcpy(decl->function.name, "@");
+    strcat(decl->function.name, tkn->val);
+
+    LIST_PUSH(srcfile->ir.body, declordef);
+}
+
+void codegen_gen_declaration(srcfile_t* srcfile, parser_astnode_t* node)
+{
+    int i;
+
+    assert(srcfile);
+    assert(node);
+    assert(node->type == PARSER_NODETYPE_DECL);
+
+    for(i=0; i<node->children.size; i++)
+    {
+        if(node->children.data[i]->type == PARSER_NODETYPE_INITDECL)
+            break;
+    }
+
+    if(i >= node->children.size) /* what in tarnation */
+        return;
+
+    codegen_gen_expectnodetype(node->children.data[i], PARSER_NODETYPE_INITDECL);
+    codegen_gen_expectnodetype(node->children.data[i]->children.data[0], PARSER_NODETYPE_DECLARATOR);
+    if(codegen_gen_isdeclaratorfuncdecl(srcfile, node->children.data[i]->children.data[0]))
+        codegen_gen_functiondeclaration(srcfile, node);
+    codegen_gen_expectnodetype(node->children.data[i+1], PARSER_NODETYPE_TERMINAL); /* ';' */
+}
+
+void codegen_gen_externaldecl(srcfile_t* srcfile, parser_astnode_t* node)
+{
+    int i;
+
+    assert(srcfile);
+    assert(node);
+    assert(node->type == PARSER_NODETYPE_EXTERNALDECL);
+
+    for(i=0; i<node->children.size; i++)
+    {
+        switch(node->children.data[i]->type)
+        {
+        case PARSER_NODETYPE_DECL:
+            codegen_gen_declaration(srcfile, node->children.data[i]);
+
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
 {
-    puts("gen");
+    int i;
+
+    assert(srcfile);
+    assert(node);
+    assert(node->type == PARSER_NODETYPE_TRANSLATIONUNIT);
+
+    for(i=0; i<node->children.size; i++)
+    {
+        codegen_gen_expectnodetype(node->children.data[i], PARSER_NODETYPE_EXTERNALDECL);
+        codegen_gen_externaldecl(srcfile, node->children.data[i]);
+    }
 }
 
 void codegen_gen(srcfile_t* srcfile)
@@ -56,6 +214,8 @@ void codegen_gen(srcfile_t* srcfile)
     assert(srcfile->ast.nodes);
 
     profiler_push("Codegen");
+
+    LIST_INITIALIZE(srcfile->ir.body);
 
     codegen_gen_translationunit(srcfile, srcfile->ast.nodes);
 
