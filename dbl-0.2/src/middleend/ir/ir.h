@@ -8,6 +8,7 @@
 #include <std/list/list.h>
 
 typedef struct ir_translationunit_s ir_translationunit_t;
+typedef struct ir_declordef_s ir_declordef_t;
 typedef struct ir_declaration_s ir_declaration_t;
 typedef struct ir_declaration_variable_s ir_declaration_variable_t;
 typedef struct ir_declaration_function_s ir_declaration_function_t;
@@ -92,52 +93,16 @@ typedef enum
 HASHMAP_TYPE_DECL(char*, ir_label_t, string_ir_label)
 LIST_TYPE(ir_declaration_t, list_ir_declaration)
 LIST_TYPE(ir_value_t, list_ir_value)
+LIST_TYPE(ir_declordef_t, list_ir_declordef)
+
+struct ir_structinit_s
+{
+    list_ir_value_t values;
+};
 
 struct ir_translationunit_s
 {
-    list_ir_declaration_t decls;
-};
-
-struct ir_declaration_s
-{
-    ir_declarationtype_e type;
-    union
-    {
-        ir_declaration_variable_t variable;
-        ir_declaration_function_t function;
-    };
-};
-
-struct ir_declaration_variable_s
-{
-    ir_type_t type;
-    char *name;       /* globals should start with '#', stack with '$' */
-};
-
-LIST_TYPE(ir_declaration_variable_t, list_ir_declaration_variable)
-
-struct ir_declaration_function_s
-{
-    ir_type_t type;
-    char *name;
-
-    list_ir_declaration_variable_t parameters;
-    bool variadic;                             /* in c, is there a '...' in the param list? */
-};
-
-struct ir_definition_variable_s
-{
-    ir_declaration_variable_t decl;
-
-    ir_value_t value;               /* if 'void', default */
-};
-
-struct ir_definition_function_s
-{
-    ir_declaration_function_t decl;
-
-    ir_instruction_t *instructions;   /* first in a doubly linked list */
-    hashmap_string_ir_label_t labels;
+    list_ir_declordef_t body;
 };
 
 struct ir_type_s
@@ -146,18 +111,10 @@ struct ir_type_s
     char *name;
 };
 
-
-
-struct ir_value_s
+struct ir_declaration_variable_s
 {
-    ir_value_type_e valtype;
     ir_type_t type;
-};
-
-struct ir_label_s
-{
-    char *name;
-    ir_instruction_t *instruction;
+    char *name;       /* globals should start with '#', stack with '$' */
 };
 
 struct ir_value_constant_s
@@ -214,9 +171,61 @@ struct ir_value_offsetvariable_s
     int64_t offset;
 };
 
-struct ir_structinit_s
+struct ir_value_s
 {
-    list_ir_value_t values;
+    ir_value_type_e valtype;
+    ir_type_t type;
+};
+
+LIST_TYPE(ir_declaration_variable_t, list_ir_declaration_variable)
+
+struct ir_declaration_function_s
+{
+    ir_type_t type;
+    char *name;
+
+    list_ir_declaration_variable_t parameters;
+    bool variadic;                             /* in c, is there a '...' in the param list? */
+};
+
+struct ir_definition_variable_s
+{
+    ir_declaration_variable_t decl;
+
+    ir_value_t value;               /* if 'void', default */
+};
+
+struct ir_declaration_s
+{
+    ir_declarationtype_e type;
+    union
+    {
+        ir_declaration_variable_t variable;
+        ir_declaration_function_t function;
+    };
+};
+
+struct ir_definition_function_s
+{
+    ir_declaration_function_t decl;
+
+    ir_instruction_t *instructions;   /* first in a doubly linked list */
+    hashmap_string_ir_label_t labels;
+};
+
+struct ir_declordef_s
+{
+    bool isdef;
+    union
+    {
+        ir_declaration_t decl;
+    };
+};
+
+struct ir_label_s
+{
+    char *name;
+    ir_instruction_t *instruction;
 };
 
 union ir_instruction_param_u
