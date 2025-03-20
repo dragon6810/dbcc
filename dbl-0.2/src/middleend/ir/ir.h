@@ -91,6 +91,7 @@ typedef enum
 } ir_value_type_e;
 
 HASHMAP_TYPE_DECL(char*, ir_label_t, string_ir_label)
+HASHMAP_TYPE_DECL(char*, ir_declaration_t*, string_ir_declaration_p)
 LIST_TYPE(ir_declaration_t, list_ir_declaration)
 LIST_TYPE(ir_value_t, list_ir_value)
 LIST_TYPE(ir_declordef_t, list_ir_declordef)
@@ -103,6 +104,9 @@ struct ir_structinit_s
 struct ir_translationunit_s
 {
     list_ir_declordef_t body;
+
+    /* acceleration structures */
+    hashmap_string_ir_declaration_p_t decls;
 };
 
 struct ir_type_s
