@@ -63,8 +63,7 @@ static int lexer_tokenize_isfloatconstant(char* str)
 
         str++;
     }
-
-    printf("got %lu\n", str - beginning);
+    
     return str - beginning;
 }
 

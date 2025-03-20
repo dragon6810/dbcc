@@ -232,7 +232,18 @@ parser_astnode_t* parser_parse_parameterdeclaration(srcfile_t* srcfile, parser_a
         parser_parse_panic(srcfile, parser_parse_peektoken(srcfile, 0), "expected declaration specifier");
 
     for(i=0; i<declspecs.size; i++)
-        LIST_PUSH(node->children, declspecs.data[i]);
+    {
+        child = parser_parse_allocnode();
+        child->type = PARSER_NODETYPE_DECLSPEC;
+        LIST_INITIALIZE(child->children);
+        child->parent = node;
+
+        LIST_RESIZE(child->children, 1);
+        declspecs.data[i]->parent = child;
+        child->children.data[0] = declspecs.data[i];
+
+        LIST_PUSH(node->children, child);
+    }
 
     if
     (

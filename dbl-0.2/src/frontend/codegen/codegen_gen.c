@@ -47,6 +47,19 @@ void codegen_gen_expectnodetype(parser_astnode_t* node, parser_nodetype_e type)
     abort();
 }
 
+lexer_token_t* codegen_gen_expecttoken(lexer_token_t* tkn, lexer_tokentype_e type)
+{
+    char name[LEXER_MAXHARDTOKENLEN];
+
+    if(tkn->type != type)
+    {
+        lexer_tkntypetostring(type, name);
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "expected %s", name);
+    }
+
+    return tkn;
+}
+
 bool codegen_gen_isdeclaratorfuncdecl(srcfile_t* srcfile, parser_astnode_t* declarator)
 {
     parser_astnode_t *direct;
@@ -70,11 +83,102 @@ bool codegen_gen_isdeclaratorfuncdecl(srcfile_t* srcfile, parser_astnode_t* decl
     return true;
 }
 
+ir_declaration_variable_t codegen_gen_paramdeclaration(srcfile_t* srcfile, parser_astnode_t* node)
+{
+    int i;
+
+    ir_declaration_variable_t decl;
+    parser_astnode_t *typespec, *declarator, *directdecl;
+    lexer_token_t *tkn;
+
+    assert(srcfile);
+    assert(node);
+    assert(node->type == PARSER_NODETYPE_PARAMDECL);
+
+    memset(&decl, 0, sizeof(decl));
+
+    typespec = 0;
+    for(i=0; i<node->children.size; i++)
+    {
+        if(node->children.data[i]->type != PARSER_NODETYPE_DECLSPEC)
+            break;
+
+        if(node->children.data[i]->children.data[0]->type != PARSER_NODETYPE_TYPESPEC)
+            continue;
+
+        typespec = node->children.data[i]->children.data[0];
+    }
+
+    if(!typespec)
+    {
+        tkn = codegen_gen_getfirsttokenofnode(node->children.data[i]);
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "expected type specifier");
+    }
+
+    if(typespec->children.data[0]->type != PARSER_NODETYPE_TERMINAL)
+    {
+        tkn = codegen_gen_getfirsttokenofnode(typespec->children.data[0]);
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "unsupported type specifier");
+    }
+
+    tkn = typespec->children.data[0]->token;
+
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_INT:
+        decl.type.type = IR_TYPE_I32;
+        decl.type.name = strdup("i32");
+
+        break;
+    default:
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "unsupported type specifier");
+    }
+
+    codegen_gen_expectnodetype(node->children.data[node->children.size-1], PARSER_NODETYPE_DECLARATOR);
+    declarator = node->children.data[node->children.size-1];
+
+    codegen_gen_expectnodetype(declarator->children.data[declarator->children.size-1], PARSER_NODETYPE_DIRECTDECL);
+    directdecl = declarator->children.data[declarator->children.size-1];
+
+    codegen_gen_expectnodetype(directdecl->children.data[0], PARSER_NODETYPE_TERMINAL);
+    codegen_gen_expecttoken(directdecl->children.data[0]->token, LEXER_TOKENTYPE_IDENTIFIER);
+    decl.name = malloc(1 + strlen(directdecl->children.data[0]->token->val) + 1);
+    strcpy(decl.name, "$");
+    strcat(decl.name, directdecl->children.data[0]->token->val);
+
+    return decl;
+}
+
+list_ir_declaration_variable_t codegen_gen_paramtypelist(srcfile_t* srcfile, parser_astnode_t* node)
+{
+    int i;
+
+    list_ir_declaration_variable_t params;
+    ir_declaration_variable_t decl;
+    parser_astnode_t *paramlist;
+
+    assert(srcfile);
+    assert(node);
+    assert(node->type == PARSER_NODETYPE_PARAMTYPELIST);
+
+    codegen_gen_expectnodetype(node->children.data[0], PARSER_NODETYPE_PARAMLIST);
+    paramlist = node->children.data[0];
+
+    LIST_INITIALIZE(params);
+    for(i=0; i<paramlist->children.size; i+=2) /* +2 to skip commas */
+    {
+        decl = codegen_gen_paramdeclaration(srcfile, paramlist->children.data[i]);
+        LIST_PUSH(params, decl);
+    }
+
+    return params;
+}
+
 void codegen_gen_functiondeclaration(srcfile_t* srcfile, parser_astnode_t* node)
 {
     int i;
 
-    parser_astnode_t *typespec, *initdecl, *declarator, *directdecl;
+    parser_astnode_t *typespec, *initdecl, *declarator, *directdecl, *paramtypelist;
     lexer_token_t *tkn;
     ir_declordef_t declordef;
     ir_declaration_t *decl;
@@ -126,10 +230,8 @@ void codegen_gen_functiondeclaration(srcfile_t* srcfile, parser_astnode_t* node)
         cli_errorsyntax(tkn->file, tkn->line, tkn->col, "unsupported type specifier");
     }
 
-    puts("got here");
-    puts("and here");
     codegen_gen_expectnodetype(node->children.data[i], PARSER_NODETYPE_INITDECL);
-    initdecl = node->children.data[i];
+    initdecl = node->children.data[i++];
     codegen_gen_expectnodetype(initdecl->children.data[0], PARSER_NODETYPE_DECLARATOR);
     declarator = initdecl->children.data[0];
     codegen_gen_expectnodetype(declarator->children.data[declarator->children.size-1], PARSER_NODETYPE_DIRECTDECL);
@@ -137,12 +239,23 @@ void codegen_gen_functiondeclaration(srcfile_t* srcfile, parser_astnode_t* node)
 
     codegen_gen_expectnodetype(directdecl->children.data[0], PARSER_NODETYPE_TERMINAL);
     tkn = directdecl->children.data[0]->token;
-    if(tkn->type != LEXER_TOKENTYPE_IDENTIFIER)
-        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "expected identifier");
+    codegen_gen_expecttoken(tkn, LEXER_TOKENTYPE_IDENTIFIER);
 
     decl->function.name = malloc(1 + strlen(tkn->val) + 1);
     strcpy(decl->function.name, "@");
     strcat(decl->function.name, tkn->val);
+
+    codegen_gen_expectnodetype(directdecl->children.data[1], PARSER_NODETYPE_TERMINAL);
+    codegen_gen_expecttoken(directdecl->children.data[1]->token, LEXER_TOKENTYPE_OPENPARENTH);
+
+    codegen_gen_expectnodetype(directdecl->children.data[2], PARSER_NODETYPE_PARAMTYPELIST);
+    paramtypelist = directdecl->children.data[2];
+    decl->function.parameters = codegen_gen_paramtypelist(srcfile, paramtypelist);
+    if(paramtypelist->children.size>1)
+        decl->function.variadic = true; /* more than just type list, should be ', ...' */
+
+    codegen_gen_expectnodetype(directdecl->children.data[3], PARSER_NODETYPE_TERMINAL);
+    codegen_gen_expecttoken(directdecl->children.data[3]->token, LEXER_TOKENTYPE_CLOSEPARENTH);
 
     LIST_PUSH(srcfile->ir.body, declordef);
 }
