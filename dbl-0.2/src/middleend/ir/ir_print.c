@@ -19,15 +19,16 @@ void ir_print_printfuncdeclaration(ir_translationunit_t* ir, ir_declaration_func
     assert(ir);
     assert(decl);
 
-    printf("function %s %s ", decl->type.name, decl->name);
+    printf("function %s %s (", decl->type.name, decl->name);
 
     for(i=0; i<decl->parameters.size; i++)
     {
         ir_print_printfuncparameter(ir, &decl->parameters.data[i]);
-        printf(" ");
+        if(i < decl->parameters.size-1)
+        printf(", ");
     }
 
-    printf("\n");
+    printf(")\n");
 }
 
 void ir_print_printdeclaration(ir_translationunit_t* ir, ir_declaration_t* decl)
@@ -50,6 +51,32 @@ void ir_print_printdeclaration(ir_translationunit_t* ir, ir_declaration_t* decl)
     }
 }
 
+void ir_print_printfuncdefinition(ir_translationunit_t* ir, ir_definition_function_t* def)
+{
+    ir_print_printfuncdeclaration(ir, &def->decl);
+    printf("{\n}");
+}
+
+void ir_print_printdefinition(ir_translationunit_t* ir, ir_definition_t* def)
+{
+    assert(ir);
+    assert(def);
+
+    printf("define ");
+
+    switch(def->type)
+    {
+    case IR_DECLARATIONTYPE_VARIABLE:
+        puts("IR_PRINT: TODO: Variable Declaration");
+
+        break;
+    case IR_DECLARATIONTYPE_FUNCTION:
+        ir_print_printfuncdefinition(ir, &def->function);
+        
+        break;
+    }
+}
+
 void ir_print(ir_translationunit_t* ir)
 {
     int i;
@@ -61,9 +88,9 @@ void ir_print(ir_translationunit_t* ir)
     for(i=0; i<ir->body.size; i++)
     {
         if(ir->body.data[i].isdef)
-            puts("IR_PRINT: TODO: Definition");
-        
-        ir_print_printdeclaration(ir, &ir->body.data[i].decl);
+            ir_print_printdefinition(ir, &ir->body.data[i].def);
+        else   
+            ir_print_printdeclaration(ir, &ir->body.data[i].decl);
     }
         
     printf("---------------\n");

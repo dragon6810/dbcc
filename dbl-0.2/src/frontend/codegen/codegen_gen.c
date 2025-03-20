@@ -287,12 +287,27 @@ ir_declaration_t codegen_gen_declaration(srcfile_t* srcfile, parser_astnode_t* n
     return decl;
 }
 
+ir_definition_t codegen_gen_functiondef(srcfile_t* srcfile, parser_astnode_t* node)
+{
+    ir_definition_t def;
+
+    assert(srcfile);
+    assert(node);
+    assert(node->type == PARSER_NODETYPE_FUNCTIONDEF);
+
+    puts("func def");
+
+    memset(&def, 0, sizeof(def));
+    return def;
+}
+
 ir_declordef_t codegen_gen_externaldecl(srcfile_t* srcfile, parser_astnode_t* node)
 {
     int i;
 
     ir_declordef_t declordef;
     ir_declaration_t *decl;
+    ir_definition_t *def;
 
     assert(srcfile);
     assert(node);
@@ -308,6 +323,12 @@ ir_declordef_t codegen_gen_externaldecl(srcfile_t* srcfile, parser_astnode_t* no
             decl = &declordef.decl;
             declordef.isdef = false;
             *decl = codegen_gen_declaration(srcfile, node->children.data[i]);
+
+            break;
+        case PARSER_NODETYPE_FUNCTIONDEF:
+            def = &declordef.def;
+            declordef.isdef = true;
+            *def = codegen_gen_functiondef(srcfile, node->children.data[i]);
 
             break;
         default:
@@ -343,22 +364,17 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
             {
             case IR_DECLARATIONTYPE_FUNCTION:
                 name = declordef.decl.function.name;
-                printf("function: %s\n", name);
                 break;
             case IR_DECLARATIONTYPE_VARIABLE:
                 name = declordef.decl.variable.name;
-                printf("variable: %s\n", name);
                 break;
             default:
-                printf("unknown: %s\n", name);
                 break;
             }
 
             pdecl = &srcfile->ir.body.data[srcfile->ir.body.size-1].decl;
             HASHMAP_SET(srcfile->ir.decls, name, pdecl);
         }
-
-        break;
     }
 }
 

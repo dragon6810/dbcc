@@ -12,6 +12,7 @@ typedef struct ir_declordef_s ir_declordef_t;
 typedef struct ir_declaration_s ir_declaration_t;
 typedef struct ir_declaration_variable_s ir_declaration_variable_t;
 typedef struct ir_declaration_function_s ir_declaration_function_t;
+typedef struct ir_definition_s ir_definition_t;
 typedef struct ir_definition_variable_s ir_definition_variable_t;
 typedef struct ir_definition_function_s ir_definition_function_t;
 typedef struct ir_type_s ir_type_t;
@@ -217,12 +218,23 @@ struct ir_definition_function_s
     hashmap_string_ir_label_t labels;
 };
 
+struct ir_definition_s
+{
+    ir_declarationtype_e type;
+    union
+    {
+        ir_definition_variable_t variable;
+        ir_definition_function_t function;
+    };
+};
+
 struct ir_declordef_s
 {
     bool isdef;
     union
     {
         ir_declaration_t decl;
+        ir_definition_t def;
     };
 };
 
