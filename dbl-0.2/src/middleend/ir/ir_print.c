@@ -19,7 +19,7 @@ void ir_print_printfuncdeclaration(ir_translationunit_t* ir, ir_declaration_func
     assert(ir);
     assert(decl);
 
-    printf("function %s %s (", decl->type.name, decl->name);
+    printf("function %s %s(", decl->type.name, decl->name);
 
     for(i=0; i<decl->parameters.size; i++)
     {
@@ -54,7 +54,7 @@ void ir_print_printdeclaration(ir_translationunit_t* ir, ir_declaration_t* decl)
 void ir_print_printfuncdefinition(ir_translationunit_t* ir, ir_definition_function_t* def)
 {
     ir_print_printfuncdeclaration(ir, &def->decl);
-    printf("{\n}");
+    printf("{\n}\n");
 }
 
 void ir_print_printdefinition(ir_translationunit_t* ir, ir_definition_t* def)

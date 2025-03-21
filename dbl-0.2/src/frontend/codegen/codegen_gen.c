@@ -289,15 +289,76 @@ ir_declaration_t codegen_gen_declaration(srcfile_t* srcfile, parser_astnode_t* n
 
 ir_definition_t codegen_gen_functiondef(srcfile_t* srcfile, parser_astnode_t* node)
 {
+    int i;
+
+    parser_astnode_t *typespec, *declarator, *directdecl, *paramtypelist;
     ir_definition_t def;
+    ir_definition_function_t *func;
+    lexer_token_t *tkn;
 
     assert(srcfile);
     assert(node);
     assert(node->type == PARSER_NODETYPE_FUNCTIONDEF);
 
-    puts("func def");
-
     memset(&def, 0, sizeof(def));
+
+    def.type = IR_DECLARATIONTYPE_FUNCTION;
+    func = &def.function;
+
+    for(i=0, typespec=NULL; i<node->children.size; i++)
+    {
+        if(node->children.data[i]->type != PARSER_NODETYPE_DECLSPEC)
+            break;
+
+        if(node->children.data[i]->children.data[0]->type != PARSER_NODETYPE_TYPESPEC)
+            continue;
+
+        typespec = node->children.data[i]->children.data[0];
+    }
+
+    if(!typespec)
+    {
+        tkn = codegen_gen_getfirsttokenofnode(node->children.data[i]);
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "expected type specifier");
+    }
+
+    if(typespec->children.data[0]->type != PARSER_NODETYPE_TERMINAL)
+    {
+        tkn = codegen_gen_getfirsttokenofnode(typespec->children.data[0]);
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "unsupported type specifier");
+    }
+
+    tkn = typespec->children.data[0]->token;
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_INT:
+        func->decl.type.type = IR_TYPE_I32;
+        func->decl.type.name = strdup("i32");
+
+        break;
+    default:
+        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "unsupported type specifier");
+    }
+
+    codegen_gen_expectnodetype(node->children.data[i], PARSER_NODETYPE_DECLARATOR);
+    declarator = node->children.data[i];
+
+    codegen_gen_expectnodetype(declarator->children.data[0], PARSER_NODETYPE_DIRECTDECL);
+    directdecl = declarator->children.data[0];
+
+    codegen_gen_expectnodetype(directdecl->children.data[0], PARSER_NODETYPE_TERMINAL);
+    tkn = directdecl->children.data[0]->token;
+    codegen_gen_expecttoken(tkn, LEXER_TOKENTYPE_IDENTIFIER);
+    func->decl.name = malloc(1 + strlen(tkn->val) + 1);
+    strcpy(func->decl.name, "@");
+    strcat(func->decl.name, tkn->val);
+
+    codegen_gen_expectnodetype(directdecl->children.data[2], PARSER_NODETYPE_PARAMTYPELIST);
+    paramtypelist = directdecl->children.data[2];
+    func->decl.parameters = codegen_gen_paramtypelist(srcfile, paramtypelist);
+    if(paramtypelist->children.size > 1)
+        func->decl.variadic = true;
+
     return def;
 }
 
@@ -346,6 +407,7 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
     ir_declordef_t declordef;
     char *name;
     ir_declaration_t *pdecl;
+    ir_definition_t *pdef;
 
     assert(srcfile);
     assert(node);
@@ -357,7 +419,31 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
         declordef = codegen_gen_externaldecl(srcfile, node->children.data[i]);
 
         LIST_PUSH(srcfile->ir.body, declordef);
-        if(!declordef.isdef)
+        if(declordef.isdef)
+        {
+            name = NULL;
+            switch(declordef.decl.type)
+            {
+            case IR_DECLARATIONTYPE_FUNCTION:
+                name = declordef.def.function.decl.name;
+                break;
+            case IR_DECLARATIONTYPE_VARIABLE:
+                /*name = declordef.variable.decl.name;*/
+                break;
+            default:
+                break;
+            }
+
+            /* has it been declared already? */
+            if(!HASHMAP_FETCH(srcfile->ir.decls, name))
+            {
+                
+            }
+
+            pdef = &srcfile->ir.body.data[srcfile->ir.body.size-1].def;
+            HASHMAP_SET(srcfile->ir.defs, name, pdef);
+        }
+        else
         {
             name = NULL;
             switch(declordef.decl.type)
@@ -387,6 +473,7 @@ void codegen_gen(srcfile_t* srcfile)
 
     LIST_INITIALIZE(srcfile->ir.body);
     HASHMAP_INITIALIZE(srcfile->ir.decls, HASHMAP_BUCKETS_LARGE, string_ir_declaration_p);
+    HASHMAP_INITIALIZE(srcfile->ir.defs, HASHMAP_BUCKETS_LARGE, string_ir_definition_p);
 
     codegen_gen_translationunit(srcfile, srcfile->ast.nodes);
 
