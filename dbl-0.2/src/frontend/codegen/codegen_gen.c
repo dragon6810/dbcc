@@ -287,6 +287,104 @@ ir_declaration_t codegen_gen_declaration(srcfile_t* srcfile, parser_astnode_t* n
     return decl;
 }
 
+ir_instruction_t* codegen_gen_jumpstatement(srcfile_t* srcfile, parser_astnode_t* statement)
+{
+    parser_astnode_t *child;
+    ir_instruction_t *first;
+    lexer_token_t *tkn;
+
+    assert(srcfile);
+    assert(statement);
+    assert(statement->type == PARSER_NODETYPE_JUMPSTATEMENT);
+
+    codegen_gen_expectnodetype(statement->children.data[0], PARSER_NODETYPE_TERMINAL);
+    child = statement->children.data[0];
+    tkn = child->token;
+
+    first = NULL;
+    switch(tkn->type)
+    {
+    case LEXER_TOKENTYPE_GOTO:
+    case LEXER_TOKENTYPE_CONTINUE:
+    case LEXER_TOKENTYPE_BREAK:
+        codegen_gen_panic(child, "CODEGEN: TODO: unsupported jump statement");
+        break;
+    case LEXER_TOKENTYPE_RETURN:
+        first = calloc(1, sizeof(ir_instruction_t));
+        first->opcode = IR_INSTRUCTIONTYPE_RETURN;
+        break;
+    default:
+        codegen_gen_panic(child, "expected jump statement");
+        break;
+    }
+
+    return first;
+}
+
+ir_instruction_t* codegen_gen_statement(srcfile_t* srcfile, parser_astnode_t* statement)
+{
+    parser_astnode_t *child;
+    ir_instruction_t *first;
+
+    assert(srcfile);
+    assert(statement);
+    assert(statement->type == PARSER_NODETYPE_STATEMENT);
+
+    first = NULL;
+    child = statement->children.data[0];
+    switch(child->type)
+    {
+    case PARSER_NODETYPE_JUMPSTATEMENT:
+        first = codegen_gen_jumpstatement(srcfile, child);
+        break;
+    default:
+        codegen_gen_panic(child, "CODEGEN: TODO: unsupported statement type");
+    }
+
+    return first;
+}
+
+ir_instruction_t* codegen_gen_functionbody(srcfile_t* srcfile, parser_astnode_t* funcdef)
+{
+    int i;
+
+    parser_astnode_t *body, *cur;
+    ir_instruction_t *first, *in;
+
+    assert(srcfile);
+    assert(funcdef);
+    assert(funcdef->type == PARSER_NODETYPE_FUNCTIONDEF);
+
+    codegen_gen_expectnodetype(funcdef->children.data[funcdef->children.size-1], PARSER_NODETYPE_COMPOUNDSTATEMENT);
+    body = funcdef->children.data[funcdef->children.size-1];
+
+    first = in = NULL;
+    for(i=1; i<body->children.size-1; i++) /* avoid curly braces */
+    {
+        cur = body->children.data[i];
+        switch(cur->type)
+        {
+        case PARSER_NODETYPE_DECL:
+            codegen_gen_panic(cur, "CODEGEN: TODO: Declaration");
+            break;
+        case PARSER_NODETYPE_STATEMENT:
+            in = codegen_gen_statement(srcfile, cur);
+            if(first)
+            {
+                first->next = in;
+                in->last = first;
+            }
+            else
+                first = in;
+            break;
+        default:
+            break;
+        }
+    }
+    
+    return first;
+}
+
 ir_definition_t codegen_gen_functiondef(srcfile_t* srcfile, parser_astnode_t* node)
 {
     int i;
@@ -358,6 +456,8 @@ ir_definition_t codegen_gen_functiondef(srcfile_t* srcfile, parser_astnode_t* no
     func->decl.parameters = codegen_gen_paramtypelist(srcfile, paramtypelist);
     if(paramtypelist->children.size > 1)
         func->decl.variadic = true;
+
+    func->instructions = codegen_gen_functionbody(srcfile, node);
 
     return def;
 }
@@ -433,7 +533,7 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
                 break;
             }
 
-            /* has it been declared already? */
+            /* if it hasn't been declared already, make a declaration */
             if(!HASHMAP_FETCH(srcfile->ir.decls, name))
             {
                 memset(&extradeclordef, 0, sizeof(extradeclordef));

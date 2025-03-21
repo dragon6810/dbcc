@@ -2,5 +2,5 @@
 
 int main(int argc, int testv)
 {
-    return 0;
+    return;
 }
