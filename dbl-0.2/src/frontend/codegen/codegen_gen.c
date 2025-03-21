@@ -404,7 +404,7 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
 {
     int i;
 
-    ir_declordef_t declordef;
+    ir_declordef_t declordef, extradeclordef;
     char *name;
     ir_declaration_t *pdecl;
     ir_definition_t *pdef;
@@ -418,7 +418,6 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
         codegen_gen_expectnodetype(node->children.data[i], PARSER_NODETYPE_EXTERNALDECL);
         declordef = codegen_gen_externaldecl(srcfile, node->children.data[i]);
 
-        LIST_PUSH(srcfile->ir.body, declordef);
         if(declordef.isdef)
         {
             name = NULL;
@@ -437,9 +436,17 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
             /* has it been declared already? */
             if(!HASHMAP_FETCH(srcfile->ir.decls, name))
             {
-                
+                memset(&extradeclordef, 0, sizeof(extradeclordef));
+                extradeclordef.isdef = false;
+                extradeclordef.decl.type = IR_DECLARATIONTYPE_FUNCTION;
+                extradeclordef.decl.function = declordef.def.function.decl;
+
+                LIST_PUSH(srcfile->ir.body, extradeclordef);
+                pdecl = &srcfile->ir.body.data[srcfile->ir.body.size-1].decl;
+                HASHMAP_SET(srcfile->ir.decls, name, pdecl);
             }
 
+            LIST_PUSH(srcfile->ir.body, declordef);
             pdef = &srcfile->ir.body.data[srcfile->ir.body.size-1].def;
             HASHMAP_SET(srcfile->ir.defs, name, pdef);
         }
@@ -458,6 +465,7 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
                 break;
             }
 
+            LIST_PUSH(srcfile->ir.body, declordef);
             pdecl = &srcfile->ir.body.data[srcfile->ir.body.size-1].decl;
             HASHMAP_SET(srcfile->ir.decls, name, pdecl);
         }
