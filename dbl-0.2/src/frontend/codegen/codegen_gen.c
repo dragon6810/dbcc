@@ -83,102 +83,11 @@ bool codegen_gen_isdeclaratorfuncdecl(srcfile_t* srcfile, parser_astnode_t* decl
     return true;
 }
 
-ir_declaration_variable_t codegen_gen_paramdeclaration(srcfile_t* srcfile, parser_astnode_t* node)
-{
-    int i;
-
-    ir_declaration_variable_t decl;
-    parser_astnode_t *typespec, *declarator, *directdecl;
-    lexer_token_t *tkn;
-
-    assert(srcfile);
-    assert(node);
-    assert(node->type == PARSER_NODETYPE_PARAMDECL);
-
-    memset(&decl, 0, sizeof(decl));
-
-    typespec = 0;
-    for(i=0; i<node->children.size; i++)
-    {
-        if(node->children.data[i]->type != PARSER_NODETYPE_DECLSPEC)
-            break;
-
-        if(node->children.data[i]->children.data[0]->type != PARSER_NODETYPE_TYPESPEC)
-            continue;
-
-        typespec = node->children.data[i]->children.data[0];
-    }
-
-    if(!typespec)
-    {
-        tkn = codegen_gen_getfirsttokenofnode(node->children.data[i]);
-        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "expected type specifier");
-    }
-
-    if(typespec->children.data[0]->type != PARSER_NODETYPE_TERMINAL)
-    {
-        tkn = codegen_gen_getfirsttokenofnode(typespec->children.data[0]);
-        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "unsupported type specifier");
-    }
-
-    tkn = typespec->children.data[0]->token;
-
-    switch(tkn->type)
-    {
-    case LEXER_TOKENTYPE_INT:
-        decl.type.type = IR_TYPE_I32;
-        decl.type.name = strdup("i32");
-
-        break;
-    default:
-        cli_errorsyntax(tkn->file, tkn->line, tkn->col, "unsupported type specifier");
-    }
-
-    codegen_gen_expectnodetype(node->children.data[node->children.size-1], PARSER_NODETYPE_DECLARATOR);
-    declarator = node->children.data[node->children.size-1];
-
-    codegen_gen_expectnodetype(declarator->children.data[declarator->children.size-1], PARSER_NODETYPE_DIRECTDECL);
-    directdecl = declarator->children.data[declarator->children.size-1];
-
-    codegen_gen_expectnodetype(directdecl->children.data[0], PARSER_NODETYPE_TERMINAL);
-    codegen_gen_expecttoken(directdecl->children.data[0]->token, LEXER_TOKENTYPE_IDENTIFIER);
-    decl.name = malloc(1 + strlen(directdecl->children.data[0]->token->val) + 1);
-    strcpy(decl.name, "$");
-    strcat(decl.name, directdecl->children.data[0]->token->val);
-
-    return decl;
-}
-
-list_ir_declaration_variable_t codegen_gen_paramtypelist(srcfile_t* srcfile, parser_astnode_t* node)
-{
-    int i;
-
-    list_ir_declaration_variable_t params;
-    ir_declaration_variable_t decl;
-    parser_astnode_t *paramlist;
-
-    assert(srcfile);
-    assert(node);
-    assert(node->type == PARSER_NODETYPE_PARAMTYPELIST);
-
-    codegen_gen_expectnodetype(node->children.data[0], PARSER_NODETYPE_PARAMLIST);
-    paramlist = node->children.data[0];
-
-    LIST_INITIALIZE(params);
-    for(i=0; i<paramlist->children.size; i+=2) /* +2 to skip commas */
-    {
-        decl = codegen_gen_paramdeclaration(srcfile, paramlist->children.data[i]);
-        LIST_PUSH(params, decl);
-    }
-
-    return params;
-}
-
 ir_declaration_function_t codegen_gen_functiondeclaration(srcfile_t* srcfile, parser_astnode_t* node)
 {
     int i;
 
-    parser_astnode_t *typespec, *initdecl, *declarator, *directdecl, *paramtypelist;
+    parser_astnode_t *typespec, *initdecl, *declarator, *directdecl;
     lexer_token_t *tkn;
     ir_declaration_function_t decl;
 
@@ -216,8 +125,8 @@ ir_declaration_function_t codegen_gen_functiondeclaration(srcfile_t* srcfile, pa
     switch(tkn->type)
     {
     case LEXER_TOKENTYPE_INT:
-        decl.type.type = IR_TYPE_I32;
-        decl.type.name = strdup("i32");
+        //decl.type.type = IR_TYPE_I32;
+        //decl.type.name = strdup("i32");
 
         break;
     default:
@@ -243,10 +152,10 @@ ir_declaration_function_t codegen_gen_functiondeclaration(srcfile_t* srcfile, pa
     codegen_gen_expecttoken(directdecl->children.data[1]->token, LEXER_TOKENTYPE_OPENPARENTH);
 
     codegen_gen_expectnodetype(directdecl->children.data[2], PARSER_NODETYPE_PARAMTYPELIST);
-    paramtypelist = directdecl->children.data[2];
-    decl.parameters = codegen_gen_paramtypelist(srcfile, paramtypelist);
-    if(paramtypelist->children.size>1)
-        decl.variadic = true; /* more than just type list, should be ', ...' */
+    //paramtypelist = directdecl->children.data[2];
+    //decl.parameters = codegen_gen_paramtypelist(srcfile, paramtypelist);
+    //if(paramtypelist->children.size>1)
+    //    decl.variadic = true; /* more than just type list, should be ', ...' */
 
     codegen_gen_expectnodetype(directdecl->children.data[3], PARSER_NODETYPE_TERMINAL);
     codegen_gen_expecttoken(directdecl->children.data[3]->token, LEXER_TOKENTYPE_CLOSEPARENTH);
@@ -254,11 +163,11 @@ ir_declaration_function_t codegen_gen_functiondeclaration(srcfile_t* srcfile, pa
     return decl;
 }
 
-ir_declaration_t codegen_gen_declaration(srcfile_t* srcfile, parser_astnode_t* node)
+ir_declaration_function_t codegen_gen_declaration(srcfile_t* srcfile, parser_astnode_t* node)
 {
     int i;
 
-    ir_declaration_t decl;
+    ir_declaration_function_t decl;
 
     assert(srcfile);
     assert(node);
@@ -279,8 +188,11 @@ ir_declaration_t codegen_gen_declaration(srcfile_t* srcfile, parser_astnode_t* n
     codegen_gen_expectnodetype(node->children.data[i]->children.data[0], PARSER_NODETYPE_DECLARATOR);
     if(codegen_gen_isdeclaratorfuncdecl(srcfile, node->children.data[i]->children.data[0]))
     {
-        decl.type = IR_DECLARATIONTYPE_FUNCTION;
-        decl.function = codegen_gen_functiondeclaration(srcfile, node);
+        decl = codegen_gen_functiondeclaration(srcfile, node);
+    }
+    else
+    {
+        codegen_gen_panic(node, "CODEGEN: TODO: variable declaration");
     }
     codegen_gen_expectnodetype(node->children.data[i+1], PARSER_NODETYPE_TERMINAL); /* ';' */
 
@@ -385,13 +297,12 @@ ir_instruction_t* codegen_gen_functionbody(srcfile_t* srcfile, parser_astnode_t*
     return first;
 }
 
-ir_definition_t codegen_gen_functiondef(srcfile_t* srcfile, parser_astnode_t* node)
+ir_definition_function_t codegen_gen_functiondef(srcfile_t* srcfile, parser_astnode_t* node)
 {
     int i;
 
-    parser_astnode_t *typespec, *declarator, *directdecl, *paramtypelist;
-    ir_definition_t def;
-    ir_definition_function_t *func;
+    parser_astnode_t *typespec, *declarator, *directdecl;
+    ir_definition_function_t def;
     lexer_token_t *tkn;
 
     assert(srcfile);
@@ -399,9 +310,6 @@ ir_definition_t codegen_gen_functiondef(srcfile_t* srcfile, parser_astnode_t* no
     assert(node->type == PARSER_NODETYPE_FUNCTIONDEF);
 
     memset(&def, 0, sizeof(def));
-
-    def.type = IR_DECLARATIONTYPE_FUNCTION;
-    func = &def.function;
 
     for(i=0, typespec=NULL; i<node->children.size; i++)
     {
@@ -430,8 +338,6 @@ ir_definition_t codegen_gen_functiondef(srcfile_t* srcfile, parser_astnode_t* no
     switch(tkn->type)
     {
     case LEXER_TOKENTYPE_INT:
-        func->decl.type.type = IR_TYPE_I32;
-        func->decl.type.name = strdup("i32");
 
         break;
     default:
@@ -447,17 +353,17 @@ ir_definition_t codegen_gen_functiondef(srcfile_t* srcfile, parser_astnode_t* no
     codegen_gen_expectnodetype(directdecl->children.data[0], PARSER_NODETYPE_TERMINAL);
     tkn = directdecl->children.data[0]->token;
     codegen_gen_expecttoken(tkn, LEXER_TOKENTYPE_IDENTIFIER);
-    func->decl.name = malloc(1 + strlen(tkn->val) + 1);
-    strcpy(func->decl.name, "@");
-    strcat(func->decl.name, tkn->val);
+    def.decl.name = malloc(1 + strlen(tkn->val) + 1);
+    strcpy(def.decl.name, "@");
+    strcat(def.decl.name, tkn->val);
 
     codegen_gen_expectnodetype(directdecl->children.data[2], PARSER_NODETYPE_PARAMTYPELIST);
-    paramtypelist = directdecl->children.data[2];
-    func->decl.parameters = codegen_gen_paramtypelist(srcfile, paramtypelist);
-    if(paramtypelist->children.size > 1)
-        func->decl.variadic = true;
+    //paramtypelist = directdecl->children.data[2];
+    //func->decl.parameters = codegen_gen_paramtypelist(srcfile, paramtypelist);
+    //if(paramtypelist->children.size > 1)
+    //    func->decl.variadic = true;
 
-    func->instructions = codegen_gen_functionbody(srcfile, node);
+    def.instructions = codegen_gen_functionbody(srcfile, node);
 
     return def;
 }
@@ -467,8 +373,8 @@ ir_declordef_t codegen_gen_externaldecl(srcfile_t* srcfile, parser_astnode_t* no
     int i;
 
     ir_declordef_t declordef;
-    ir_declaration_t *decl;
-    ir_definition_t *def;
+    ir_declaration_function_t *decl;
+    ir_definition_function_t *def;
 
     assert(srcfile);
     assert(node);
@@ -505,9 +411,6 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
     int i;
 
     ir_declordef_t declordef, extradeclordef;
-    char *name;
-    ir_declaration_t *pdecl;
-    ir_definition_t *pdef;
 
     assert(srcfile);
     assert(node);
@@ -520,54 +423,18 @@ void codegen_gen_translationunit(srcfile_t* srcfile, parser_astnode_t* node)
 
         if(declordef.isdef)
         {
-            name = NULL;
-            switch(declordef.decl.type)
-            {
-            case IR_DECLARATIONTYPE_FUNCTION:
-                name = declordef.def.function.decl.name;
-                break;
-            case IR_DECLARATIONTYPE_VARIABLE:
-                /*name = declordef.variable.decl.name;*/
-                break;
-            default:
-                break;
-            }
-
             /* if it hasn't been declared already, make a declaration */
-            if(!HASHMAP_FETCH(srcfile->ir.decls, name))
-            {
-                memset(&extradeclordef, 0, sizeof(extradeclordef));
-                extradeclordef.isdef = false;
-                extradeclordef.decl.type = IR_DECLARATIONTYPE_FUNCTION;
-                extradeclordef.decl.function = declordef.def.function.decl;
+            memset(&extradeclordef, 0, sizeof(extradeclordef));
+            extradeclordef.isdef = false;
+            extradeclordef.decl = declordef.def.decl;
 
-                LIST_PUSH(srcfile->ir.body, extradeclordef);
-                pdecl = &srcfile->ir.body.data[srcfile->ir.body.size-1].decl;
-                HASHMAP_SET(srcfile->ir.decls, name, pdecl);
-            }
+            LIST_PUSH(srcfile->ir.body, extradeclordef);
 
             LIST_PUSH(srcfile->ir.body, declordef);
-            pdef = &srcfile->ir.body.data[srcfile->ir.body.size-1].def;
-            HASHMAP_SET(srcfile->ir.defs, name, pdef);
         }
         else
         {
-            name = NULL;
-            switch(declordef.decl.type)
-            {
-            case IR_DECLARATIONTYPE_FUNCTION:
-                name = declordef.decl.function.name;
-                break;
-            case IR_DECLARATIONTYPE_VARIABLE:
-                name = declordef.decl.variable.name;
-                break;
-            default:
-                break;
-            }
-
-            LIST_PUSH(srcfile->ir.body, declordef);
-            pdecl = &srcfile->ir.body.data[srcfile->ir.body.size-1].decl;
-            HASHMAP_SET(srcfile->ir.decls, name, pdecl);
+            codegen_gen_panic(node->children.data[i], "CODEGEN: TODO: support declarations\n");
         }
     }
 }
@@ -580,8 +447,6 @@ void codegen_gen(srcfile_t* srcfile)
     profiler_push("Codegen");
 
     LIST_INITIALIZE(srcfile->ir.body);
-    HASHMAP_INITIALIZE(srcfile->ir.decls, HASHMAP_BUCKETS_LARGE, string_ir_declaration_p);
-    HASHMAP_INITIALIZE(srcfile->ir.defs, HASHMAP_BUCKETS_LARGE, string_ir_definition_p);
 
     codegen_gen_translationunit(srcfile, srcfile->ast.nodes);
 
