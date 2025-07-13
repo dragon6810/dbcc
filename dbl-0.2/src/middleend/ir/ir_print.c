@@ -9,7 +9,25 @@ void ir_print_printfuncdeclaration(ir_translationunit_t* ir, ir_declaration_func
     assert(ir);
     assert(decl);
 
-    printf("function i32 %s ( )", decl->name);
+    printf("function i32 %s ( )\n", decl->name);
+}
+
+void ir_print_printinstruction(ir_translationunit_t* ir, ir_instruction_t* in)
+{
+    assert(ir);
+    assert(in);
+
+    switch (in->opcode)
+    {
+    case IR_INSTRUCTIONTYPE_LOADCONST:
+        printf("%%%llu = %d\n", in->loadconst.reg.reg, in->loadconst.val.val);
+
+        break;
+    case IR_INSTRUCTIONTYPE_RETURN:
+        printf("return %%%llu\n", in->ret.reg.reg);
+    default:        
+        break;
+    }
 }
 
 void ir_print_printfuncbody(ir_translationunit_t* ir, ir_definition_function_t* def)
@@ -24,7 +42,8 @@ void ir_print_printfuncbody(ir_translationunit_t* ir, ir_definition_function_t* 
 
     for(in=def->instructions; in; in=in->next)
     {
-        printf("    instruction\n");
+        printf("    ");
+        ir_print_printinstruction(ir, in);
     }
 }
 

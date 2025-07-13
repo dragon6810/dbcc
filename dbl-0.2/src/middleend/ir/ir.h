@@ -71,6 +71,7 @@ struct ir_definition_function_s
     ir_declaration_function_t decl;
 
     ir_instruction_t *instructions;   /* first in a doubly linked list */
+    unsigned long long nregisters;
 };
 
 struct ir_declordef_s
@@ -85,6 +86,7 @@ struct ir_declordef_s
 
 struct ir_instruction_loadconst_s
 {
+    ir_value_register_t reg;
     ir_value_constant_t val;
 };
 
