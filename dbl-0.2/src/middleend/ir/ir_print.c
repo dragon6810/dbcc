@@ -29,6 +29,9 @@ void ir_print_printinstruction(ir_translationunit_t* ir, ir_instruction_t* in)
     case IR_INSTRUCTIONTYPE_ADD:
         printf("%%%llu = %%%llu + %%%llu\n", in->add.dst.reg, in->add.a.reg, in->add.b.reg);
         break;
+    case IR_INSTRUCTIONTYPE_MULT:
+        printf("%%%llu = %%%llu * %%%llu\n", in->mult.dst.reg, in->mult.a.reg, in->mult.b.reg);
+        break;
     default:
         break;
     }

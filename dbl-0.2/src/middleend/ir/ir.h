@@ -15,6 +15,7 @@ typedef struct ir_instruction_s ir_instruction_t;
 typedef struct ir_instruction_loadconst_s ir_instruction_loadconst_t;
 typedef struct ir_instruction_return_s ir_instruction_return_t;
 typedef struct ir_instruction_add_s ir_instruction_add_t;
+typedef struct ir_instruction_mult_s ir_instruction_mult_t;
 typedef struct ir_value_s ir_value_t;
 typedef struct ir_value_register_s ir_value_register_t;
 typedef struct ir_value_constant_s ir_value_constant_t;
@@ -32,6 +33,7 @@ typedef enum
     IR_INSTRUCTIONTYPE_LOADCONST,
     IR_INSTRUCTIONTYPE_RETURN,
     IR_INSTRUCTIONTYPE_ADD,
+    IR_INSTRUCTIONTYPE_MULT,
 } ir_instructiontype_e;
 
 LIST_TYPE(ir_value_t, list_ir_value)
@@ -106,6 +108,13 @@ struct ir_instruction_add_s
     ir_value_register_t b;
 };
 
+struct ir_instruction_mult_s
+{
+    ir_value_register_t dst;
+    ir_value_register_t a;
+    ir_value_register_t b;
+};
+
 struct ir_instruction_s
 {
     ir_instructiontype_e opcode;
@@ -114,6 +123,7 @@ struct ir_instruction_s
         ir_instruction_loadconst_t loadconst;
         ir_instruction_return_t ret;
         ir_instruction_add_t add;
+        ir_instruction_mult_t mult;
     };
     
     ir_instruction_t *next, *last;

@@ -166,14 +166,50 @@ ir_regindex_t codegen_gen_castexpression(srcfile_t* srcfile, ir_definition_funct
 
 ir_regindex_t codegen_gen_multexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
 {
+    parser_astnode_t *a, *b, *star;
+    ir_regindex_t areg, breg, dstreg;
+    ir_instruction_t *newinst;
+
     assert(srcfile);
     assert(func);
     assert(exp);
     assert(exp->type == PARSER_NODETYPE_MULTEXPR);
 
-    assert(exp->children.size == 1);
+    if(exp->children.size == 1)
+        return codegen_gen_castexpression(srcfile, func, exp->children.data[0]);
+    
+    assert(exp->children.size == 3);
 
-    return codegen_gen_castexpression(srcfile, func, exp->children.data[0]);
+    a = exp->children.data[0];
+    star = exp->children.data[1];
+    b = exp->children.data[2];
+
+    codegen_gen_expectnodetype(a, PARSER_NODETYPE_CASTEXPR);
+    codegen_gen_expectnodetype(star, PARSER_NODETYPE_TERMINAL);
+    codegen_gen_expecttoken(star->token, LEXER_TOKENTYPE_ASTERISK);
+    codegen_gen_expectnodetype(b, PARSER_NODETYPE_MULTEXPR);
+
+    areg = codegen_gen_castexpression(srcfile, func, a);
+    breg = codegen_gen_multexpression(srcfile, func, b);
+
+    newinst = calloc(1, sizeof(ir_instruction_t));
+    newinst->opcode = IR_INSTRUCTIONTYPE_MULT;
+    dstreg = func->nregisters++;
+    newinst->mult.dst.reg = dstreg;
+    newinst->mult.a.reg = areg;
+    newinst->mult.b.reg = breg;
+
+    if(func->insttail)
+    {
+        func->insttail->next = newinst;
+        newinst->last = func->insttail;
+    }
+    else
+        func->instructions = newinst;
+
+    func->insttail = newinst;
+
+    return dstreg;
 }
 
 ir_regindex_t codegen_gen_addexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
