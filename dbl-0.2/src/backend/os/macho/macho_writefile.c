@@ -19,7 +19,7 @@ bool macho_writefile(executable_t* exec, const char* filename)
 
     header.magic = MACHO_HEADERMAGIC;
     header.cputype = MACHO_CPUTYPE_ARM;
-    header.cpusubtype = MACHP_CPUSUBTYPE_ARM;
+    header.cpusubtype = MACHO_CPUSUBTYPE_ARM;
     header.filetype = MACHO_FILETYPE_EXECUTABLE;
     header.ncmd = 2;
     header.cmdsize = sizeof(loadcmd) + sizeof(seg64cmd) + sizeof(maincmd);
@@ -40,7 +40,7 @@ bool macho_writefile(executable_t* exec, const char* filename)
 
     loadcmd[1].loadcmdtype = MACHO_LOADCMDTYPE_MAIN;
     loadcmd[1].len = sizeof(loadcmd[0]) + sizeof(maincmd);
-    maincmd.entryoff = 0;
+    maincmd.entryoff = seg64cmd.fileoff;
     maincmd.stacksize = 0; // no stack for now
 
     ptr = fopen(filename, "wb");
