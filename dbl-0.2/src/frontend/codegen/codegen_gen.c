@@ -83,38 +83,241 @@ bool codegen_gen_isdeclaratorfuncdecl(srcfile_t* srcfile, parser_astnode_t* decl
     return true;
 }
 
-ir_regindex_t codegen_gen_expression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+ir_regindex_t codegen_gen_constant(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
 {
-    ir_instruction_t* in;
-    ir_instruction_t* last;
+    ir_regindex_t regidx;
+    ir_instruction_t *newinst;
 
     assert(srcfile);
     assert(func);
     assert(exp);
-    assert(exp->type == PARSER_NODETYPE_EXPR);
+    assert(exp->type == PARSER_NODETYPE_CONSTANT);
 
-    // TODO: actually parse expression
+    assert(exp->children.size == 1);
+    assert(exp->children.data[0]->type == PARSER_NODETYPE_TERMINAL);
+    assert(exp->children.data[0]->token->type == LEXER_TOKENTYPE_INTCONSTANT);
 
-    in = calloc(1, sizeof(ir_instruction_t));
-    in->opcode = IR_INSTRUCTIONTYPE_LOADCONST;
+    newinst = calloc(1, sizeof(ir_instruction_t));
+    newinst->opcode = IR_INSTRUCTIONTYPE_LOADCONST;
+    regidx = func->nregisters++;
+    newinst->loadconst.reg.reg = regidx;
+    newinst->loadconst.val.val = atoi(exp->children.data[0]->token->val);
 
-    in->loadconst.reg.reg = func->nregisters++;
-    in->loadconst.val.val = 0;
-
-    last = func->instructions;
-    while(last && last->next)
-        last = last->next;
-    if(last)
+    if(func->insttail)
     {
-        last->next = in;
-        in->last = last;
+        func->insttail->next = newinst;
+        newinst->last = func->insttail;
     }
     else
-    {
-        func->instructions = in;
-    }
+        func->instructions = newinst;
 
-    return func->nregisters - 1;
+    func->insttail = newinst;
+
+    return regidx;
+}
+
+ir_regindex_t codegen_gen_primaryexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_PRIMARYEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_constant(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_postfixexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_POSTFIXEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_primaryexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_unaryexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_UNARYEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_postfixexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_castexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_CASTEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_unaryexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_multexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_MULTEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_castexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_addexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_ADDEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_multexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_shiftexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_SHIFTEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_addexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_relationalexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_RELATIONALEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_shiftexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_equalityexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_EQUALITYEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_relationalexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_andexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_ANDEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_equalityexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_exclusiveorexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_EXCLUSIVEOREXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_andexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_inclusiveorexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_INCLUSIVEOREXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_exclusiveorexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_logicalandexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_LOGICALANDEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_inclusiveorexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_logicalorexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_LOGICALOREXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_logicalandexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_conditionalexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_CONDITIONALEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_logicalorexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_assignmentexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_ASSIGNEXPR);
+
+    assert(exp->children.size == 1);
+
+    return codegen_gen_conditionalexpression(srcfile, func, exp->children.data[0]);
+}
+
+ir_regindex_t codegen_gen_expression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
+{
+    assert(srcfile);
+    assert(func);
+    assert(exp);
+    assert(exp->type == PARSER_NODETYPE_EXPR);
+    
+    assert(exp->children.size == 1);
+
+    return codegen_gen_assignmentexpression(srcfile, func, exp->children.data[0]);
 }
 
 ir_instruction_t* codegen_gen_returnstatement(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* statement)
@@ -194,7 +397,7 @@ void codegen_gen_functionbody(srcfile_t* srcfile, ir_definition_function_t* func
     int i;
 
     parser_astnode_t *body, *cur;
-    ir_instruction_t *last, *in;
+    ir_instruction_t *in;
 
     assert(srcfile);
     assert(funcdef);
@@ -203,7 +406,6 @@ void codegen_gen_functionbody(srcfile_t* srcfile, ir_definition_function_t* func
     codegen_gen_expectnodetype(funcdef->children.data[funcdef->children.size-1], PARSER_NODETYPE_COMPOUNDSTATEMENT);
     body = funcdef->children.data[funcdef->children.size-1];
 
-    last = NULL;
     for(i=1; i<body->children.size-1; i++) /* avoid curly braces */
     {
         cur = body->children.data[i];
@@ -214,20 +416,17 @@ void codegen_gen_functionbody(srcfile_t* srcfile, ir_definition_function_t* func
             break;
         case PARSER_NODETYPE_STATEMENT:
             in = codegen_gen_statement(srcfile, func, cur);
-            if(!last)
-                last = func->instructions;
-            while(last && last->next)
-                last = last->next;
-            if(last)
+
+            if(func->insttail)
             {
-                last->next = in;
-                in->last = last;
+                func->insttail->next = in;
+                in->last = func->insttail;
             }
             else
             {
                 func->instructions = in;
             }
-            last = in;
+            func->insttail = in;
             break;
         default:
             break;

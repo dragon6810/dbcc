@@ -71,6 +71,7 @@ struct ir_definition_function_s
     ir_declaration_function_t decl;
 
     ir_instruction_t *instructions;   /* first in a doubly linked list */
+    ir_instruction_t *insttail;
     unsigned long long nregisters;
 };
 
