@@ -25,7 +25,11 @@ void ir_print_printinstruction(ir_translationunit_t* ir, ir_instruction_t* in)
         break;
     case IR_INSTRUCTIONTYPE_RETURN:
         printf("return %%%llu\n", in->ret.reg.reg);
-    default:        
+        break;
+    case IR_INSTRUCTIONTYPE_ADD:
+        printf("%%%llu = %%%llu + %%%llu\n", in->add.dst.reg, in->add.a.reg, in->add.b.reg);
+        break;
+    default:
         break;
     }
 }
