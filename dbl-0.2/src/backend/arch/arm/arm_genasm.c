@@ -20,11 +20,15 @@ static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main
         switch(cmd->opcode)
         {
         case IR_INSTRUCTIONTYPE_LOADCONST:
-            fprintf(ptr, "  mov X0, #%d\n", cmd->loadconst.val.val);
+            fprintf(ptr, "  mov X%llu, #%d\n", cmd->loadconst.reg.reg, cmd->loadconst.val.val);
             break;
         case IR_INSTRUCTIONTYPE_RETURN:
+            fprintf(ptr, "  mov X0, X%llu\n", cmd->ret.reg.reg);
             fprintf(ptr, "  mov X16, #1\n");
             fprintf(ptr, "  svc #0x80\n");
+            break;
+        case IR_INSTRUCTIONTYPE_ADD:
+            fprintf(ptr, "  add X%llu, X%llu, X%llu\n", cmd->add.dst.reg, cmd->add.a.reg, cmd->add.b.reg);
             break;
         default:
             break;
