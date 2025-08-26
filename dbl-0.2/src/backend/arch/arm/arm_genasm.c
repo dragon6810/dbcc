@@ -8,7 +8,6 @@
 
 #define N_REG_WORD 13
 
-#if 0
 static const char* name_reg_word[N_REG_WORD] =
 {
     "W0",
@@ -25,22 +24,18 @@ static const char* name_reg_word[N_REG_WORD] =
     "W11",
     "W12",
 };
-#endif
 
-static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main)
+static void arm_genasm_genregmap(ir_definition_function_t* func, int* outmap)
 {
-    const int nullrange = -1;
-
-    int i, icmd, j;
+    int i, icmd, j, k;
     ir_instruction_t *cmd;
 
     int nreg;
     int regpeak; // the maximum number of registers used at once
     int regstarts[func->nregisters], regends[func->nregisters];
+    int nactive, active[func->nregisters];
     int clobbered[3];
-
-    if(!main)
-        return;
+    int revmap[N_REG_WORD]; // reverse map for efficiency
 
     for(i=0; i<func->nregisters; i++)
     {
@@ -50,7 +45,7 @@ static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main
     for(cmd=func->instructions, icmd=0; cmd; cmd=cmd->next, icmd++)
     {
         for(i=0; i<3; i++)
-            clobbered[i] = nullrange;
+            clobbered[i] = -1;
 
         switch(cmd->opcode)
         {
@@ -98,7 +93,65 @@ static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main
             regpeak = nreg;
     }
 
+    assert(regpeak < N_REG_WORD && "TODO: register spilling.\n");
+
+    for(i=0; i<func->nregisters; i++)
+        outmap[i] = -1;
+    for(i=0; i<N_REG_WORD; i++)
+        revmap[i] = -1;
+
+    for(i=0; i<func->nregisters; i++)
+    {
+        nactive = 0;
+        for(j=0; j<func->nregisters; j++)
+        {
+            if(i == j)
+                continue;
+
+            if(regstarts[i] < regstarts[j])
+                continue;
+            if(regstarts[i] >= regends[j])
+                continue;
+
+            active[nactive++] = j;
+        }
+
+        for(j=0; j<N_REG_WORD; j++)
+        {
+            for(k=0; k<nactive; k++)
+            {
+                if(outmap[active[k]] == j)
+                    break;
+            }
+
+            // j is taken!
+            if(k < nactive)
+                continue;
+
+            break;
+        }
+
+        assert(j < N_REG_WORD);
+
+        outmap[i] = j;
+    }
+
     printf("peak registers: %d.\n", regpeak);
+    for(i=0; i<func->nregisters; i++)
+    {
+        printf("%%%d -> %s\n", i, name_reg_word[outmap[i]]);
+    }
+}
+
+static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main)
+{
+    ir_instruction_t *cmd;
+    int regmap[func->nregisters];
+
+    if(!main)
+        return;
+
+    arm_genasm_genregmap(func, regmap);
 
     fprintf(ptr, "_start:\n");
 
@@ -107,18 +160,24 @@ static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main
         switch(cmd->opcode)
         {
         case IR_INSTRUCTIONTYPE_LOADCONST:
-            fprintf(ptr, "  mov W%llu, #%d\n", cmd->loadconst.reg.reg, cmd->loadconst.val.val);
+            fprintf(ptr, "  mov %s, #%d\n", name_reg_word[regmap[cmd->loadconst.reg.reg]], cmd->loadconst.val.val);
             break;
         case IR_INSTRUCTIONTYPE_RETURN:
-            fprintf(ptr, "  sxtw X0, W%llu\n", cmd->ret.reg.reg);
+            fprintf(ptr, "  sxtw X0, %s\n", name_reg_word[regmap[cmd->ret.reg.reg]]);
             fprintf(ptr, "  mov X16, #1\n");
             fprintf(ptr, "  svc #0x80\n");
             break;
         case IR_INSTRUCTIONTYPE_ADD:
-            fprintf(ptr, "  add W%llu, W%llu, W%llu\n", cmd->add.dst.reg, cmd->add.a.reg, cmd->add.b.reg);
+            fprintf(ptr, "  add %s, %s, %s\n", 
+                name_reg_word[regmap[cmd->add.dst.reg]], 
+                name_reg_word[regmap[cmd->add.a.reg]], 
+                name_reg_word[regmap[cmd->add.b.reg]]);
             break;
         case IR_INSTRUCTIONTYPE_MULT:
-            fprintf(ptr, "  mul W%llu, W%llu, W%llu\n", cmd->mult.dst.reg, cmd->mult.a.reg, cmd->mult.b.reg);
+            fprintf(ptr, "  mul %s, %s, %s\n", 
+                name_reg_word[regmap[cmd->mult.dst.reg]], 
+                name_reg_word[regmap[cmd->mult.a.reg]], 
+                name_reg_word[regmap[cmd->mult.b.reg]]);
             break;
         default:
             break;
