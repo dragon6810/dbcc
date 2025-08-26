@@ -124,12 +124,18 @@ ir_regindex_t codegen_gen_constant(srcfile_t* srcfile, ir_definition_function_t*
     return regidx;
 }
 
+ir_regindex_t codegen_gen_expression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp);
+
 ir_regindex_t codegen_gen_primaryexpression(srcfile_t* srcfile, ir_definition_function_t* func, parser_astnode_t* exp)
 {
     assert(srcfile);
     assert(func);
     assert(exp);
     assert(exp->type == PARSER_NODETYPE_PRIMARYEXPR);
+
+    // ( <expression> )
+    if(exp->children.size == 3)
+        return codegen_gen_expression(srcfile, func, exp->children.data[1]);
 
     assert(exp->children.size == 1);
 
