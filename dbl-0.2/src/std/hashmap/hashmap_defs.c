@@ -4,3 +4,4 @@
 #include <stddef.h>
 
 HASHMAP_TYPE_DEF(hashmap_string_hash, hashmap_string_cmp, hashmap_string_free, NULL, hashmap_string_copy, NULL, string_int64)
+HASHMAP_TYPE_DEF(hashmap_int32_hash, hashmap_int32_cmp, NULL, NULL, NULL, NULL, int32_int32)

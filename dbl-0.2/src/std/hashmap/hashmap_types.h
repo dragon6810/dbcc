@@ -7,5 +7,6 @@
 #include <std/hashmap/int64/int64.h>
 
 HASHMAP_TYPE_DECL(char*, long int, string_int64)
+HASHMAP_TYPE_DECL(int32_t, int32_t, int32_int32)
 
 #endif

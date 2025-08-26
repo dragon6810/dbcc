@@ -4,14 +4,88 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <std/assert/assert.h>
+
+#define N_REG_WORD 13
+
+#if 0
+static const char* name_reg_word[N_REG_WORD] =
+{
+    "W0",
+    "W1",
+    "W2",
+    "W3",
+    "W4",
+    "W5",
+    "W6",
+    "W7",
+    "W8",
+    "W9",
+    "W10",
+    "W11",
+    "W12",
+};
+#endif
+
 static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main)
 {
+    const int nullrange = -1;
+
+    int i, icmd;
     ir_instruction_t *cmd;
 
-    // put everything into X0 for now
+    // int regpeak; // the maximum number of registers used at once
+    int regstarts[func->nregisters], regends[func->nregisters];
+    int clobbered[3];
 
     if(!main)
         return;
+
+    for(i=0; i<func->nregisters; i++)
+    {
+        regstarts[i] = regends[i] = -1;
+    }
+
+    for(cmd=func->instructions, icmd=0; cmd; cmd=cmd->next, icmd++)
+    {
+        for(i=0; i<3; i++)
+            clobbered[i] = nullrange;
+
+        switch(cmd->opcode)
+        {
+        case IR_INSTRUCTIONTYPE_LOADCONST:
+            clobbered[0] = cmd->loadconst.reg.reg;
+            break;
+        case IR_INSTRUCTIONTYPE_RETURN:
+            clobbered[0] = cmd->ret.reg.reg;
+            break;
+        case IR_INSTRUCTIONTYPE_ADD:
+            clobbered[0] = cmd->add.dst.reg;
+            clobbered[1] = cmd->add.a.reg;
+            clobbered[2] = cmd->add.b.reg;
+            break;
+        case IR_INSTRUCTIONTYPE_MULT:
+            clobbered[0] = cmd->mult.dst.reg;
+            clobbered[1] = cmd->mult.a.reg;
+            clobbered[2] = cmd->mult.b.reg;
+            break;
+        }
+
+        for(i=0; i<3; i++)
+        {
+            if(clobbered[i] < 0)
+                break;
+                
+            if(regstarts[clobbered[i]] < 0)
+                regstarts[clobbered[i]] = icmd;
+            regends[clobbered[i]] = icmd;
+        }
+    }
+
+    for(i=0; i<func->nregisters; i++)
+    {
+        printf("%%%d range: %d - %d.\n", i, regstarts[i], regends[i]);
+    }
 
     fprintf(ptr, "_start:\n");
 
