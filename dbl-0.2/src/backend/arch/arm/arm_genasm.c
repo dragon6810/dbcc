@@ -31,10 +31,11 @@ static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main
 {
     const int nullrange = -1;
 
-    int i, icmd;
+    int i, icmd, j;
     ir_instruction_t *cmd;
 
-    // int regpeak; // the maximum number of registers used at once
+    int nreg;
+    int regpeak; // the maximum number of registers used at once
     int regstarts[func->nregisters], regends[func->nregisters];
     int clobbered[3];
 
@@ -78,14 +79,26 @@ static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main
                 
             if(regstarts[clobbered[i]] < 0)
                 regstarts[clobbered[i]] = icmd;
-            regends[clobbered[i]] = icmd;
+            regends[clobbered[i]] = icmd + 1;
         }
     }
 
-    for(i=0; i<func->nregisters; i++)
+    regpeak = nreg = 0;
+    for(i=0; i<icmd; i++)
     {
-        printf("%%%d range: %d - %d.\n", i, regstarts[i], regends[i]);
+        for(j=0; j<func->nregisters; j++)
+        {
+            if(regstarts[j] == i)
+                nreg++;
+            if(regends[j] == i)
+                nreg--;
+        }
+
+        if(nreg > regpeak)
+            regpeak = nreg;
     }
+
+    printf("peak registers: %d.\n", regpeak);
 
     fprintf(ptr, "_start:\n");
 
