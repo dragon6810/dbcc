@@ -1,5 +1,6 @@
 .global _start
 _start:
+  sub sp, sp, #120
   mov W0, #1
   mov W1, #1
   mov W2, #1
@@ -86,3 +87,4 @@ _start:
   sxtw X0, W2
   mov X16, #1
   svc #0x80
+  add sp, sp, #120

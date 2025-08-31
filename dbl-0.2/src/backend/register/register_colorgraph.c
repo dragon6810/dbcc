@@ -31,7 +31,7 @@ int register_colorgraph_findspillcol(register_node_t* node)
     return -1;
 }
 
-void register_colorgraph_colornode(int ncol, register_node_t* node)
+bool register_colorgraph_colornode(int ncol, register_node_t* node)
 {
     int i;
     register_edge_t *edge;
@@ -58,19 +58,25 @@ void register_colorgraph_colornode(int ncol, register_node_t* node)
     if(i >= ncol)
     {
         node->color = register_colorgraph_findspillcol(node);
-        return;
+        return true;
     }
 
     node->color = i;
+    return false;
 }
 
-void register_colorgraph(int nreg, register_node_t** graph, int ncol)
+int register_colorgraph(int nreg, register_node_t** graph, int ncol)
 {
     int i;
+
+    int spills;
 
     for(i=0; i<nreg; i++)
         graph[i]->color = -1;
 
-    for(i=0; i<nreg; i++)
-        register_colorgraph_colornode(ncol, graph[i]);
+    for(i=spills=0; i<nreg; i++)
+        if(register_colorgraph_colornode(ncol, graph[i]))
+            spills++;
+
+    return spills;
 }

@@ -20,7 +20,8 @@ typedef struct register_node_s
     struct register_node_s *next;
 } register_node_t;
 
-void register_colorgraph(int nreg, register_node_t** graph, int ncol);
+// returns n spills
+int register_colorgraph(int nreg, register_node_t** graph, int ncol);
 register_node_t** register_makegraph(ir_definition_function_t* func);
 
 #endif

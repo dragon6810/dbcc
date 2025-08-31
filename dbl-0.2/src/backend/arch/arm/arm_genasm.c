@@ -30,14 +30,17 @@ static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main
 {
     ir_instruction_t *cmd;
     register_node_t **graph;
+    int nspills;
 
     if(!main)
         return;
 
     graph = register_makegraph(func);
-    register_colorgraph(func->nregisters, graph, N_REG_WORD);
+    nspills = register_colorgraph(func->nregisters, graph, N_REG_WORD);
 
     fprintf(ptr, "_start:\n");
+
+    fprintf(ptr, "  sub sp, sp, #%d\n", nspills * 4);
 
     for(cmd=func->instructions; cmd; cmd=cmd->next)
     {
@@ -67,6 +70,8 @@ static void arm_genasm_func(FILE* ptr, ir_definition_function_t* func, bool main
             break;
         }
     }
+
+    fprintf(ptr, "  add sp, sp, #%d\n", nspills * 4);
 }
 
 char* arm_genasm(ir_translationunit_t* ir)
